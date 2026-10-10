@@ -8,8 +8,8 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
-    const { id } = await params;
     const db = getDb();
 
     // Get latest version of this contract
@@ -37,9 +37,19 @@ export async function POST(
       }
     );
 
+    // Check if this was submitted from an HTML browser form
+    const acceptHeader = _req.headers.get("accept") || "";
+    if (acceptHeader.includes("text/html")) {
+      return NextResponse.redirect(new URL(`/contracts/${id}`, _req.url), { status: 303 });
+    }
+
     return NextResponse.json({ success: true, ...result });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Re-run failed";
+    const acceptHeader = _req.headers.get("accept") || "";
+    if (acceptHeader.includes("text/html")) {
+      return NextResponse.redirect(new URL(`/contracts/${id}?error=${encodeURIComponent(message)}`, _req.url), { status: 303 });
+    }
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

@@ -30,8 +30,9 @@ export class OpenRouterProvider implements AiProvider {
           { role: "user", content: userPrompt },
         ],
         temperature: 0,
-        max_tokens: 4000,
+        max_tokens: 6000,
         response_format: { type: "json_object" },
+        reasoning: { effort: "none" },
       }),
       signal: AbortSignal.timeout(45000),
     });

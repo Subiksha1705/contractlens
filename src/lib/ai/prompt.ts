@@ -17,7 +17,8 @@ STRICT OPERATING RULES:
 9. For deadlines:
    - Set fixed_date (YYYY-MM-DD) ONLY when an explicit fixed calendar date is written in the contract.
    - Otherwise set fixed_date: null, and describe the rule using anchor ("effective_date" | "expiry_date" | "fixed_date" | "event"), amount, unit ("days" | "weeks" | "months" | "years"), direction ("before" | "after"), and day_type ("calendar" | "business" | "unspecified").
-10. Valid finding types: "expiry" | "renewal" | "termination" | "notice" | "obligation" | "conflict" | "ambiguity" | "policy_mismatch".`;
+10. Valid finding types: "expiry" | "renewal" | "termination" | "notice" | "obligation" | "conflict" | "ambiguity" | "policy_mismatch".
+11. Focus on the most significant findings (up to 15 key items: term, auto-renewal, termination, notice periods, payment deadlines, governing law, ambiguities, and conflicts). Keep verbatim quotes concise (<= 250 characters).`;
 
 export function buildExtractionPrompt(contractText: string, policyText?: string): string {
   let prompt = `Extract all parties, the effective date, and key contract findings from the contract below into the following EXACT JSON format:

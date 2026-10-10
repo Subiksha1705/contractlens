@@ -103,14 +103,13 @@ export async function ingestContract(
     aiLatencyMs = aiResult.latencyMs;
     tokenUsage = aiResult.usage;
 
-    // Strip accidental markdown code fences
-    let cleanJson = rawAiOutput.trim();
-    if (cleanJson.startsWith("```")) {
-      cleanJson = cleanJson.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
-    }
-
     try {
-      parsedExtraction = JSON.parse(cleanJson);
+      const { parsed, salvaged } = cleanAndParseJson(rawAiOutput);
+      parsedExtraction = parsed;
+      if (salvaged) {
+        extractionStatus = "partial";
+        extractionError = "JSON output was truncated by token limit and partially salvaged.";
+      }
     } catch (parseErr: unknown) {
       extractionStatus = "failed";
       extractionError = `Malformed JSON from AI model: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`;
@@ -336,3 +335,26 @@ export async function ingestContract(
 
 // Internal drizzle helper
 import { eq as drizzleEq } from "drizzle-orm";
+
+export function cleanAndParseJson(raw: string): { parsed: unknown; salvaged: boolean } {
+  let clean = raw.trim();
+  if (clean.startsWith("```")) {
+    clean = clean.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+  }
+  try {
+    return { parsed: JSON.parse(clean), salvaged: false };
+  } catch (initialErr) {
+    // Attempt salvage: look for findings array cut off
+    const findingsIdx = clean.indexOf('"findings"');
+    if (findingsIdx !== -1) {
+      const lastObjEnd = clean.lastIndexOf("}");
+      if (lastObjEnd > findingsIdx) {
+        const candidate = clean.slice(0, lastObjEnd + 1) + "\n]}";
+        try {
+          return { parsed: JSON.parse(candidate), salvaged: true };
+        } catch {}
+      }
+    }
+    throw initialErr;
+  }
+}
