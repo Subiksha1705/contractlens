@@ -24,6 +24,25 @@ export async function getLatestVersion(contractId: string) {
   return rows[0] ?? null;
 }
 
+export async function listVersionsByContract(contractId: string) {
+  const db = getDb();
+  return db
+    .select()
+    .from(contractVersions)
+    .where(eq(contractVersions.contractId, contractId))
+    .orderBy(desc(contractVersions.versionNumber));
+}
+
+export async function getVersionById(versionId: string) {
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(contractVersions)
+    .where(eq(contractVersions.id, versionId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 export async function getFindingsByVersion(versionId: string) {
   const db = getDb();
   return db.select().from(findings).where(eq(findings.versionId, versionId));

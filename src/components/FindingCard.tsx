@@ -189,6 +189,24 @@ export function FindingCard({ finding: initialFinding, onUpdate }: FindingCardPr
         </div>
       )}
 
+      {/* Stale Warning & Version Diff Banner */}
+      {(finding.reviewStatus === "potentially_stale" || finding.staleReason) && (
+        <div className="my-3 p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs space-y-1">
+          <div className="flex items-center gap-1.5 text-amber-900 font-bold">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>Potentially Stale / Outdated Finding</span>
+          </div>
+          {finding.staleReason && (
+            <p className="text-amber-800 text-xs">
+              <strong>Version Diff:</strong> {finding.staleReason}
+            </p>
+          )}
+          <p className="text-[11px] text-amber-700 italic">
+            This finding differed or evidence changed from the previous version. Please review before approving.
+          </p>
+        </div>
+      )}
+
       {/* Uncertainty Notice */}
       {finding.certainty === "uncertain" && (
         <div className="my-3 p-3 bg-amber-50/70 border border-amber-200/70 rounded-xl text-xs space-y-1">

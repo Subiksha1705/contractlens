@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getContractById, getLatestVersion, getFindingsByVersion } from "@/lib/db/queries";
+import { getContractById, getFindingsByVersion, listVersionsByContract } from "@/lib/db/queries";
 import { ReviewWorkspace } from "@/components/ReviewWorkspace";
 import {
   AlertTriangle,
@@ -13,17 +13,25 @@ export const dynamic = "force-dynamic";
 
 export default async function ContractReviewPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ versionId?: string; error?: string }>;
 }) {
   const { id } = await params;
+  const sParams = searchParams ? await searchParams : {};
   const contract = await getContractById(id);
 
   if (!contract) {
     notFound();
   }
 
-  const version = await getLatestVersion(id);
+  const allVersions = await listVersionsByContract(id);
+  const selectedVersionId = sParams.versionId;
+  const version = selectedVersionId
+    ? allVersions.find((v) => v.id === selectedVersionId) ?? allVersions[0]
+    : allVersions[0];
+
   const findingsList = version ? await getFindingsByVersion(version.id) : [];
 
   const isMock = version?.aiProvider === "mock";
@@ -33,14 +41,41 @@ export default async function ContractReviewPage({
   return (
     <div className="max-w-5xl mx-auto py-10 px-6 sm:px-8">
       {/* Navigation */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Version Switcher Tabs */}
+          {allVersions.length > 1 && (
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 mr-2">
+              <span className="text-[11px] font-semibold text-slate-500 px-2">Versions:</span>
+              {allVersions.map((v) => (
+                <Link
+                  key={v.id}
+                  href={`/contracts/${id}?versionId=${v.id}`}
+                  className={`px-2.5 py-0.5 rounded text-xs font-mono font-medium transition ${
+                    v.id === version?.id
+                      ? "bg-white text-slate-900 shadow-xs font-bold"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  v{v.versionNumber}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          <Link
+            href={`/contracts/${id}/versions`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold border border-indigo-200 transition"
+          >
+            Versions & Diff ({allVersions.length})
+          </Link>
+
           {isMock && (
             <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
               Sample output (mock provider)

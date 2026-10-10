@@ -37,6 +37,7 @@ export function ReviewWorkspace({
       pending: findingsList.filter((f) => f.reviewStatus === "pending").length,
       approved: findingsList.filter((f) => f.reviewStatus === "approved").length,
       rejected: findingsList.filter((f) => f.reviewStatus === "rejected").length,
+      stale: findingsList.filter((f) => f.reviewStatus === "potentially_stale").length,
       uncertain: findingsList.filter((f) => f.certainty === "uncertain").length,
       unverified: findingsList.filter((f) => f.evidenceStatus === "unverified").length,
     };
@@ -74,13 +75,39 @@ export function ReviewWorkspace({
         </div>
         <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs">
           <p className="text-xs font-semibold text-amber-600 flex items-center gap-1">
-            <AlertCircle className="w-3.5 h-3.5" /> Uncertain / Unverified
+            <AlertCircle className="w-3.5 h-3.5" /> Stale / Uncertain
           </p>
           <p className="text-xl font-extrabold text-amber-700 mt-0.5">
-            {counts.uncertain} / {counts.unverified}
+            {counts.stale} stale &bull; {counts.uncertain} unc.
           </p>
         </div>
       </div>
+
+      {/* Stale Findings Alert Banner */}
+      {counts.stale > 0 && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-amber-100 rounded-xl text-amber-700 shrink-0">
+              <AlertCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-amber-900">
+                {counts.stale} previously approved {counts.stale === 1 ? "item" : "items"} may be outdated — please re-review
+              </p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Values or evidence changed between contract versions. Review each flagged item to confirm or update.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setStatusFilter("potentially_stale")}
+            className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-xs transition shrink-0"
+          >
+            Filter Stale Items ({counts.stale})
+          </button>
+        </div>
+      )}
 
       {/* Upcoming Deadlines Section */}
       <DeadlineList findings={findingsList} />
@@ -98,6 +125,7 @@ export function ReviewWorkspace({
             { id: "all", label: `All (${counts.total})` },
             { id: "pending", label: `Pending (${counts.pending})` },
             { id: "approved", label: `Approved (${counts.approved})` },
+            { id: "potentially_stale", label: `Potentially Stale (${counts.stale})` },
             { id: "rejected", label: `Rejected (${counts.rejected})` },
           ].map((btn) => (
             <button
