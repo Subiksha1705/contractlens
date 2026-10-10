@@ -1,5 +1,6 @@
 import { getDb } from "../db/client";
 import { findings, auditEvents, contractVersions, Finding } from "../db/schema";
+import { computeDeadlinesForFindings } from "../deadlines/compute";
 import { eq } from "drizzle-orm";
 
 export interface ReviewActionInput {
@@ -169,8 +170,41 @@ export async function updateFindingReview(
       },
     });
 
-    return { finding: updated, previousStatus };
+    // Recompute deadlines for this version (zero AI)
+    await recomputeVersionDeadlines(current.versionId);
+
+    const [refreshed] = await db
+      .select()
+      .from(findings)
+      .where(eq(findings.id, findingId))
+      .limit(1);
+
+    return { finding: refreshed || updated, previousStatus };
   }
 
   throw new Error(`Unsupported review action: ${String(input.action)}`);
+}
+
+export async function recomputeVersionDeadlines(versionId: string): Promise<void> {
+  const db = getDb();
+  const allFindings = await db
+    .select()
+    .from(findings)
+    .where(eq(findings.versionId, versionId));
+
+  const deadlineMap = computeDeadlinesForFindings(allFindings);
+
+  for (const f of allFindings) {
+    const computed = deadlineMap.get(f);
+    if (computed) {
+      await db
+        .update(findings)
+        .set({
+          deadlineDate: computed.deadlineDate,
+          deadlineBasis: computed.deadlineBasis,
+          deadlineFlag: computed.deadlineFlag,
+        })
+        .where(eq(findings.id, f.id));
+    }
+  }
 }

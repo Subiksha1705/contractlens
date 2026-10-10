@@ -16,6 +16,7 @@ import {
 } from "../ai/schema";
 import { verifyQuote } from "../evidence/verify";
 import { locateQuote } from "../evidence/locate";
+import { computeDeadlinesForFindings } from "../deadlines/compute";
 import { getEnv } from "../env";
 
 export interface IngestOptions {
@@ -296,6 +297,17 @@ export async function ingestContract(
   // If full validation failed but we salvaged items -> status is partial
   if (!fullValidation.success && findingsToInsert.length > 0) {
     extractionStatus = "partial";
+  }
+
+  // Compute deterministic deadlines
+  const deadlineMap = computeDeadlinesForFindings(findingsToInsert);
+  for (const item of findingsToInsert) {
+    const computed = deadlineMap.get(item);
+    if (computed) {
+      item.deadlineDate = computed.deadlineDate;
+      item.deadlineBasis = computed.deadlineBasis;
+      item.deadlineFlag = computed.deadlineFlag;
+    }
   }
 
   // Update version status if partial

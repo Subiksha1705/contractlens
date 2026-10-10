@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { Finding } from "@/lib/db/schema";
 import { FindingCard } from "./FindingCard";
+import { DeadlineList } from "./DeadlineList";
 import { Filter, CheckCircle2, Clock, AlertCircle, FileText } from "lucide-react";
 
 interface ReviewWorkspaceProps {
@@ -80,6 +81,9 @@ export function ReviewWorkspace({
           </p>
         </div>
       </div>
+
+      {/* Upcoming Deadlines Section */}
+      <DeadlineList findings={findingsList} />
 
       {/* Filter Chips Bar */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs mb-6 space-y-3">
