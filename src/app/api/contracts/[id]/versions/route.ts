@@ -5,6 +5,8 @@ import { ingestContract } from "@/lib/services/ingest";
 import { compareVersions } from "@/lib/versions/compare";
 import { eq, desc } from "drizzle-orm";
 
+export const maxDuration = 60;
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

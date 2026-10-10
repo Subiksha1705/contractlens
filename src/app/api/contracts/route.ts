@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ingestContract } from "@/lib/services/ingest";
 import { validateFileSize, sanitizeFileName, sanitizeErrorMessage } from "@/lib/security/sanitize";
 
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get("content-type") || "";
