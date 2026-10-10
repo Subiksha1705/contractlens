@@ -5,17 +5,21 @@ import {
   getContractById,
   listVersionsByContract,
   getContractDashboardStats,
+  listContracts,
 } from "@/lib/db/queries";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { StatusChart } from "@/components/dashboard/StatusChart";
 import { TypeChart } from "@/components/dashboard/TypeChart";
 import { DeadlineWindowChart } from "@/components/dashboard/DeadlineWindowChart";
+import { Dropdown, DropdownItem } from "@/components/ui/Dropdown";
 import {
   ArrowLeft,
   BarChart3,
   FileCheck2,
-  Layers,
+  GitCompare,
+  FileText,
   Sparkles,
+  Layers,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -29,13 +33,18 @@ export default async function ContractDashboardPage({
 }) {
   const { id } = await params;
   const sParams = searchParams ? await searchParams : {};
-  const contract = await getContractById(id);
+
+  // Fetch contract, all versions, and full contracts list concurrently for maximum speed
+  const [contract, allVersions, allContracts] = await Promise.all([
+    getContractById(id),
+    listVersionsByContract(id),
+    listContracts(),
+  ]);
 
   if (!contract) {
     notFound();
   }
 
-  const allVersions = await listVersionsByContract(id);
   const selectedVersionId = sParams.versionId;
   const version = selectedVersionId
     ? allVersions.find((v) => v.id === selectedVersionId) ?? allVersions[0]
@@ -45,82 +54,111 @@ export default async function ContractDashboardPage({
     notFound();
   }
 
+  // Fast SQL aggregate queries
   const stats = await getContractDashboardStats(id, version.id);
 
   if (!stats) {
     notFound();
   }
 
+  // Contract switcher dropdown items (instant redirection across contracts)
+  const contractDropdownItems: DropdownItem[] = allContracts.map((c) => ({
+    id: c.id,
+    label: c.title,
+    sublabel: `Uploaded ${new Date(c.createdAt).toLocaleDateString()}`,
+    href: `/contracts/${c.id}/dashboard`,
+  }));
+
+  // Version switcher dropdown items (instant redirection across versions)
+  const versionDropdownItems: DropdownItem[] = allVersions.map((v) => ({
+    id: v.id,
+    label: `Version ${v.versionNumber}`,
+    sublabel: `Source: ${v.sourceKind.toUpperCase()} • ${v.aiModel}`,
+    badge: v.id === version.id ? "Current" : undefined,
+    badgeColor: "blue",
+    href: `/contracts/${id}/dashboard?versionId=${v.id}`,
+  }));
+
   return (
-    <div className="max-w-6xl mx-auto py-10 px-6 sm:px-8 text-slate-900">
-      {/* Navigation */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
+    <div className="max-w-6xl mx-auto py-8 px-5 sm:px-8 text-slate-900">
+      {/* Top Navigation & Direct Redirection Dropdowns */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <Link
           href={`/contracts/${id}${selectedVersionId ? `?versionId=${selectedVersionId}` : ""}`}
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Review Workspace
+          <ArrowLeft className="w-4 h-4" /> Back to Review Studio
         </Link>
+
+        {/* Dropdowns for Fast 1-Click Navigation (Less Clicks) */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Version Switcher */}
-          {allVersions.length > 1 && (
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 mr-2">
-              <span className="text-[11px] font-semibold text-slate-500 px-2">Version:</span>
-              {allVersions.map((v) => (
-                <Link
-                  key={v.id}
-                  href={`/contracts/${id}/dashboard?versionId=${v.id}`}
-                  className={`px-2.5 py-0.5 rounded text-xs font-mono font-medium transition ${
-                    v.id === version.id
-                      ? "bg-white text-slate-900 shadow-xs font-bold"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  v{v.versionNumber}
-                </Link>
-              ))}
-            </div>
+          {/* Reusable Contract Switcher Dropdown with Redirection */}
+          {allContracts.length > 1 && (
+            <Dropdown
+              label="Switch Contract"
+              icon={<Layers className="w-3.5 h-3.5 text-[#005CB9]" />}
+              items={contractDropdownItems}
+              selectedId={id}
+              buttonVariant="subtle"
+            />
           )}
+
+          {/* Reusable Version Switcher Dropdown with Redirection */}
+          {allVersions.length > 1 && (
+            <Dropdown
+              label={`v${version.versionNumber}`}
+              icon={<GitCompare className="w-3.5 h-3.5 text-slate-500" />}
+              items={versionDropdownItems}
+              selectedId={version.id}
+              buttonVariant="subtle"
+            />
+          )}
+
+          {/* Direct Actions */}
+          <Link
+            href={`/contracts/${id}${selectedVersionId ? `?versionId=${selectedVersionId}` : ""}`}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#005CB9] hover:bg-[#004890] text-white text-xs font-semibold shadow-xs transition"
+          >
+            <FileText className="w-3.5 h-3.5" /> Review Studio
+          </Link>
 
           <Link
             href={`/contracts/${id}/summary${selectedVersionId ? `?versionId=${selectedVersionId}` : ""}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold border border-emerald-200 transition"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold border border-emerald-200 transition"
           >
-            <FileCheck2 className="w-3.5 h-3.5" /> Printable Summary
-          </Link>
-          <Link
-            href={`/contracts/${id}/versions`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold border border-indigo-200 transition"
-          >
-            <Layers className="w-3.5 h-3.5" /> Versions & Diff ({allVersions.length})
+            <FileCheck2 className="w-3.5 h-3.5 text-emerald-600" /> Printable Summary
           </Link>
         </div>
       </div>
 
-      {/* Header */}
+      {/* Contract & Dashboard Header */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs mb-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <BarChart3 className="w-5 h-5 text-indigo-600" />
-              <span className="uppercase text-[11px] font-bold tracking-wider text-indigo-700">
-                SQL Aggregates Dashboard
+              <BarChart3 className="w-5 h-5 text-[#005CB9]" />
+              <span className="uppercase text-[11px] font-bold tracking-wider text-[#005CB9]">
+                Contract Analytics & SQL Metrics
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               {stats.contractTitle}
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              Deterministic metrics for Version {stats.currentVersionNumber} &bull; Generated from live database queries at 0 AI token usage.
+              Live deterministic metrics for Version {stats.currentVersionNumber} &bull; Generated directly via Postgres aggregates at 0 AI token usage.
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs font-mono font-medium bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Live SQL Aggregates
+
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <Sparkles className="w-3 h-3 text-emerald-600" />
+              100% Deterministic (0 AI Cost)
+            </span>
           </div>
         </div>
       </div>
 
-      {/* StatCards */}
+      {/* 1. Stat Cards Row */}
       <StatCards
         totalFindings={stats.totalFindings}
         approvedCount={stats.approvedCount}
@@ -131,41 +169,20 @@ export default async function ContractDashboardPage({
         totalVersions={stats.totalVersions}
       />
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Chart 1: Review Status */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col justify-between">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 mb-1">Review Status Breakdown</h2>
-            <p className="text-xs text-slate-400 mb-4">
-              Approval and stale progress for current version
-            </p>
-          </div>
-          <StatusChart data={stats.byStatus} />
-        </div>
+      {/* 2. Visual Charts Row (2 Columns) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        {/* Status Breakdown (Donut Chart) */}
+        <StatusChart data={stats.byStatus} />
 
-        {/* Chart 2: Finding Types */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col justify-between">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 mb-1">Clause Categories</h2>
-            <p className="text-xs text-slate-400 mb-4">
-              Distribution across legal finding types
-            </p>
-          </div>
-          <TypeChart data={stats.byType} />
-        </div>
+        {/* Clause Types Distribution (Bar Chart) */}
+        <TypeChart data={stats.byType} />
+      </div>
 
-        {/* Chart 3: Deadline Windows */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs flex flex-col justify-between">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 mb-1">Upcoming Deadline Windows</h2>
-            <p className="text-xs text-slate-400 mb-4">
-              Bucketed deterministic time horizons
-            </p>
-          </div>
-          <DeadlineWindowChart data={stats.deadlinesByWindow} />
-        </div>
+      {/* 3. Upcoming Obligations Time Horizon (Full Width) */}
+      <div className="mt-8">
+        <DeadlineWindowChart data={stats.deadlinesByWindow} />
       </div>
     </div>
   );
 }
+

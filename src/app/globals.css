@@ -6,7 +6,7 @@
   --docusign-blue: #005cb9;
   --docusign-blue-hover: #004890;
   --docusign-dark: #0b2545;
-  color-scheme: light;
+  color-scheme: light !important;
 }
 
 @theme inline {
@@ -16,16 +16,24 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Force light theme across entire app - user mandate */
-html {
+/* Force light theme across entire app - override OS dark mode */
+html,
+body,
+:root {
   color-scheme: light !important;
-  background-color: #f8fafc;
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-body {
-  background-color: #f8fafc;
-  color: #0f172a;
-  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+@media (prefers-color-scheme: dark) {
+  :root,
+  html,
+  body {
+    color-scheme: light !important;
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+  }
 }
 
 /* Custom sleek internal scrollbar styling */
@@ -50,13 +58,15 @@ body {
 
 /* Document Paper Canvas styling resembling real legal contracts */
 .document-sheet {
-  background: #ffffff;
+  background: #ffffff !important;
+  color: #0f172a !important;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.05);
 }
 
 /* Active Highlight pulse */
 .highlight-evidence {
   background-color: #fef08a !important;
+  color: #713f12 !important;
   outline: 2px solid #eab308;
   border-radius: 2px;
   transition: all 0.3s ease;

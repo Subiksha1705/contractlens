@@ -4,14 +4,14 @@ import {
   Zap,
   FileText,
   CheckCircle2,
-  BarChart3,
-  FileCheck2,
-  Calendar,
-  Layers,
   ArrowUpRight,
   Search,
+  Calendar,
 } from "lucide-react";
+
 import { listContracts } from "@/lib/db/queries";
+import { ContractListCard } from "@/components/ContractListCard";
+
 
 export const dynamic = "force-dynamic";
 
@@ -118,78 +118,11 @@ export default async function Home() {
         </Link>
       </div>
 
-      {/* Contracts Section (DocuSign Style Contract Table) */}
-      <div className="mt-12 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Layers className="w-5 h-5 text-[#005CB9]" /> Contracts Workspace ({contractsList.length})
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Select any agreement to review evidence, manage deadlines, or export print-ready summaries.
-            </p>
-          </div>
-          <Link
-            href="/contracts/new"
-            className="text-xs font-bold text-[#005CB9] hover:underline"
-          >
-            + Upload New Agreement
-          </Link>
-        </div>
-
-        {contractsList.length > 0 ? (
-          <div className="divide-y divide-slate-100">
-            {contractsList.map((c) => (
-              <div
-                key={c.id}
-                className="py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:bg-slate-50/70 px-3 rounded-xl transition"
-              >
-                <div className="min-w-0">
-                  <Link
-                    href={`/contracts/${c.id}`}
-                    className="text-sm font-bold text-slate-900 hover:text-[#005CB9] transition block truncate"
-                  >
-                    {c.title}
-                  </Link>
-                  <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5" />
-                    Uploaded on {new Date(c.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <Link
-                    href={`/contracts/${c.id}`}
-                    className="px-3 py-1.5 rounded-lg bg-[#005CB9] hover:bg-[#004890] text-white text-xs font-semibold shadow-xs transition"
-                  >
-                    Review Studio
-                  </Link>
-                  <Link
-                    href={`/contracts/${c.id}/dashboard`}
-                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition flex items-center gap-1"
-                  >
-                    <BarChart3 className="w-3.5 h-3.5 text-[#005CB9]" /> Dashboard
-                  </Link>
-                  <Link
-                    href={`/contracts/${c.id}/summary`}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold transition flex items-center gap-1"
-                  >
-                    <FileCheck2 className="w-3.5 h-3.5 text-emerald-600" /> Summary
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="py-12 text-center text-slate-400 text-xs">
-            No contracts uploaded yet. Click{" "}
-            <Link href="/contracts/new" className="text-[#005CB9] font-semibold underline">
-              Upload & Extract Contract
-            </Link>{" "}
-            to begin.
-          </div>
-        )}
+      {/* Contracts Workspace Section with Internal Scroll & Delete */}
+      <div className="mt-12">
+        <ContractListCard initialContracts={contractsList} />
       </div>
+
 
       {/* Core Architectural Guarantees */}
       <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">

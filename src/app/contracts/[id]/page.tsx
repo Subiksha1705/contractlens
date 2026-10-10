@@ -1,8 +1,14 @@
 import React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getContractById, getFindingsByVersion, listVersionsByContract } from "@/lib/db/queries";
+import {
+  getContractById,
+  getFindingsByVersion,
+  listVersionsByContract,
+  listContracts,
+} from "@/lib/db/queries";
 import { ReviewWorkspace } from "@/components/ReviewWorkspace";
+import { Dropdown, DropdownItem } from "@/components/ui/Dropdown";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -10,6 +16,7 @@ import {
   BarChart3,
   FileCheck2,
   GitCompare,
+  Layers,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -23,13 +30,18 @@ export default async function ContractReviewPage({
 }) {
   const { id } = await params;
   const sParams = searchParams ? await searchParams : {};
-  const contract = await getContractById(id);
+
+  // Concurrent queries for fast loading
+  const [contract, allVersions, allContracts] = await Promise.all([
+    getContractById(id),
+    listVersionsByContract(id),
+    listContracts(),
+  ]);
 
   if (!contract) {
     notFound();
   }
 
-  const allVersions = await listVersionsByContract(id);
   const selectedVersionId = sParams.versionId;
   const version = selectedVersionId
     ? allVersions.find((v) => v.id === selectedVersionId) ?? allVersions[0]
@@ -41,15 +53,32 @@ export default async function ContractReviewPage({
   const isFailed = version?.extractionStatus === "failed";
   const isPartial = version?.extractionStatus === "partial";
 
+  // Reusable dropdown items
+  const contractDropdownItems: DropdownItem[] = allContracts.map((c) => ({
+    id: c.id,
+    label: c.title,
+    sublabel: `Uploaded ${new Date(c.createdAt).toLocaleDateString()}`,
+    href: `/contracts/${c.id}`,
+  }));
+
+  const versionDropdownItems: DropdownItem[] = allVersions.map((v) => ({
+    id: v.id,
+    label: `v${v.versionNumber}`,
+    sublabel: `${v.sourceKind.toUpperCase()} • ${v.aiModel}`,
+    badge: v.id === version?.id ? "Active" : undefined,
+    badgeColor: "blue",
+    href: `/contracts/${id}?versionId=${v.id}`,
+  }));
+
   return (
-    <div className="max-w-7xl mx-auto py-5 px-4 sm:px-6 flex flex-col min-h-screen">
-      {/* DocuSign Studio Top Bar */}
+    <div className="max-w-7xl mx-auto py-5 px-4 sm:px-6 flex flex-col min-h-screen text-slate-900">
+      {/* DocuSign Studio Top Bar with Reusable Dropdowns */}
       <header className="bg-white border border-slate-200 rounded-2xl px-5 py-3.5 shadow-xs mb-4 flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href="/"
             className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition shrink-0"
-            title="Back to Contracts Dashboard"
+            title="Back to Contracts Workspace"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -70,26 +99,28 @@ export default async function ContractReviewPage({
           </div>
         </div>
 
-        {/* Action Controls & Sub-routes */}
+        {/* Action Controls & Navigation Dropdowns (Less Clicks) */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Version Switcher */}
+          {/* Switch Contract Dropdown */}
+          {allContracts.length > 1 && (
+            <Dropdown
+              label="Switch Contract"
+              icon={<Layers className="w-3.5 h-3.5 text-[#005CB9]" />}
+              items={contractDropdownItems}
+              selectedId={id}
+              buttonVariant="subtle"
+            />
+          )}
+
+          {/* Version Switcher Dropdown */}
           {allVersions.length > 1 && (
-            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200 mr-1">
-              <span className="text-[10px] font-bold text-slate-400 px-2 uppercase">v:</span>
-              {allVersions.map((v) => (
-                <Link
-                  key={v.id}
-                  href={`/contracts/${id}?versionId=${v.id}`}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition ${
-                    v.id === version?.id
-                      ? "bg-white text-slate-900 shadow-xs font-bold"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  v{v.versionNumber}
-                </Link>
-              ))}
-            </div>
+            <Dropdown
+              label={`v${version?.versionNumber ?? 1}`}
+              icon={<GitCompare className="w-3.5 h-3.5 text-slate-500" />}
+              items={versionDropdownItems}
+              selectedId={version?.id}
+              buttonVariant="subtle"
+            />
           )}
 
           {/* Quick Sub-navigation */}
