@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { UploadCloud, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
 interface ParseResponse {
   success: boolean;
+  contractId?: string;
   kind?: string;
   fileName?: string | null;
   charCount?: number;
@@ -13,7 +15,17 @@ interface ParseResponse {
   error?: string;
 }
 
-export function UploadForm() {
+interface UploadFormProps {
+  endpoint?: string;
+  redirectOnSuccess?: boolean;
+}
+
+export function UploadForm({
+  endpoint = "/api/debug/parse",
+  redirectOnSuccess = false,
+}: UploadFormProps) {
+  const router = useRouter();
+  const [title, setTitle] = useState("");
   const [mode, setMode] = useState<"file" | "paste">("file");
   const [file, setFile] = useState<File | null>(null);
   const [text, setText] = useState("");
@@ -85,7 +97,9 @@ This Master Services Agreement ("Agreement") is made and entered into as of Janu
         }
         const data = new FormData();
         data.append("file", file);
-        res = await fetch("/api/debug/parse", {
+        if (title.trim()) data.append("title", title.trim());
+        if (policyText.trim()) data.append("policyText", policyText.trim());
+        res = await fetch(endpoint, {
           method: "POST",
           body: data,
         });
@@ -93,17 +107,27 @@ This Master Services Agreement ("Agreement") is made and entered into as of Janu
         if (!text.trim()) {
           throw new Error("Please paste contract text.");
         }
-        res = await fetch("/api/debug/parse", {
+        res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text, policyText }),
+          body: JSON.stringify({
+            text,
+            title: title.trim() || undefined,
+            policyText: policyText.trim() || undefined,
+          }),
         });
       }
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error || "Failed to parse document.");
+        throw new Error(json.error || "Failed to process document.");
       }
+
+      if (redirectOnSuccess && json.contractId) {
+        router.push(`/contracts/${json.contractId}`);
+        return;
+      }
+
       setResult(json);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
@@ -174,6 +198,19 @@ This Master Services Agreement ("Agreement") is made and entered into as of Janu
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            Contract Title (Optional)
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Master Services Agreement 2025"
+            className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50"
+          />
+        </div>
+
         {mode === "file" ? (
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">

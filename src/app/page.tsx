@@ -31,10 +31,16 @@ export default function Home() {
       {/* Action Buttons */}
       <div className="mt-8 flex flex-wrap items-center gap-4">
         <Link
-          href="/debug/parse"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 transition-colors shadow-sm"
+          href="/contracts/new"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors shadow-sm"
         >
-          <FileText className="w-4 h-4" /> Try Document Ingestion
+          <FileText className="w-4 h-4" /> Upload & Extract Contract
+        </Link>
+        <Link
+          href="/debug/parse"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-white border border-slate-300 text-slate-700 font-medium text-sm hover:bg-slate-50 transition-colors shadow-sm"
+        >
+          Parse Only (Debug)
         </Link>
         <Link
           href="/api/health"
