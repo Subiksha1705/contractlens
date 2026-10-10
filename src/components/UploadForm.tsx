@@ -38,6 +38,12 @@ export function UploadForm({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) {
+      if (selected.size > 10 * 1024 * 1024) {
+        setError(`File size (${(selected.size / (1024 * 1024)).toFixed(1)} MB) exceeds the 10 MB limit.`);
+        setFile(null);
+        e.target.value = "";
+        return;
+      }
       setFile(selected);
       setError(null);
       setResult(null);
@@ -174,7 +180,7 @@ This Master Services Agreement ("Agreement") is made and entered into as of Janu
           }}
           className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition ${
             mode === "file"
-              ? "bg-indigo-600 text-white shadow-sm"
+              ? "bg-[#005CB9] text-white shadow-xs"
               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
         >
@@ -189,7 +195,7 @@ This Master Services Agreement ("Agreement") is made and entered into as of Janu
           }}
           className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition ${
             mode === "paste"
-              ? "bg-indigo-600 text-white shadow-sm"
+              ? "bg-[#005CB9] text-white shadow-xs"
               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
           }`}
         >
@@ -320,11 +326,15 @@ This Master Services Agreement ("Agreement") is made and entered into as of Janu
         <button
           type="submit"
           disabled={loading || (mode === "file" && !file) || (mode === "paste" && !text.trim())}
-          className="w-full py-3 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          className="w-full py-3 px-5 rounded-xl bg-[#005CB9] hover:bg-[#004890] text-white font-semibold text-sm transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
         >
           {loading ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" /> Parsing Document...
+              <Loader2 className="w-4 h-4 animate-spin" /> Extracting Contract Obligations...
+            </>
+          ) : redirectOnSuccess ? (
+            <>
+              <FileText className="w-4 h-4" /> Extract Contract (1 AI Call)
             </>
           ) : (
             <>
@@ -336,3 +346,4 @@ This Master Services Agreement ("Agreement") is made and entered into as of Janu
     </div>
   );
 }
+

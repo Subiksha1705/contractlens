@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ingestContract } from "@/lib/services/ingest";
+import { validateFileSize, sanitizeFileName, sanitizeErrorMessage } from "@/lib/security/sanitize";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,11 +14,18 @@ export async function POST(req: NextRequest) {
       const policyText = (formData.get("policyText") as string | null) || undefined;
 
       if (file && file.size > 0) {
+        // Enforce 10MB limit
+        const sizeCheck = validateFileSize(file.size);
+        if (!sizeCheck.valid) {
+          return NextResponse.json({ success: false, error: sizeCheck.error }, { status: 413 });
+        }
+
+        const safeFileName = sanitizeFileName(file.name);
         const arrayBuffer = await file.arrayBuffer();
         const result = await ingestContract(
           {
             buffer: arrayBuffer,
-            fileName: file.name,
+            fileName: safeFileName,
             mimeType: file.type,
           },
           { contractTitle: title, policyText }
@@ -54,7 +62,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, ...result });
     }
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Ingestion failed";
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    const rawMessage = err instanceof Error ? err.message : "Ingestion failed";
+    const safeMessage = sanitizeErrorMessage(rawMessage);
+    return NextResponse.json({ success: false, error: safeMessage }, { status: 500 });
   }
 }
+

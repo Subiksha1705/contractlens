@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db/client";
 import { contractVersions } from "@/lib/db/schema";
 import { ingestContract } from "@/lib/services/ingest";
+import { sanitizeErrorMessage } from "@/lib/security/sanitize";
 import { eq, desc } from "drizzle-orm";
 
 export async function POST(
@@ -45,11 +46,13 @@ export async function POST(
 
     return NextResponse.json({ success: true, ...result });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Re-run failed";
+    const rawMessage = err instanceof Error ? err.message : "Re-run failed";
+    const safeMessage = sanitizeErrorMessage(rawMessage);
     const acceptHeader = _req.headers.get("accept") || "";
     if (acceptHeader.includes("text/html")) {
-      return NextResponse.redirect(new URL(`/contracts/${id}?error=${encodeURIComponent(message)}`, _req.url), { status: 303 });
+      return NextResponse.redirect(new URL(`/contracts/${id}?error=${encodeURIComponent(safeMessage)}`, _req.url), { status: 303 });
     }
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    return NextResponse.json({ success: false, error: safeMessage }, { status: 500 });
   }
 }
+

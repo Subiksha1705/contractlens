@@ -13,14 +13,22 @@ import {
   HelpCircle,
   AlertTriangle,
   Loader2,
+  FileSearch,
 } from "lucide-react";
 
 interface FindingCardProps {
   finding: Finding;
   onUpdate?: (updated: Finding) => void;
+  onSelectEvidence?: (quote: string) => void;
+  isHighlighted?: boolean;
 }
 
-export function FindingCard({ finding: initialFinding, onUpdate }: FindingCardProps) {
+export function FindingCard({
+  finding: initialFinding,
+  onUpdate,
+  onSelectEvidence,
+  isHighlighted = false,
+}: FindingCardProps) {
   const [finding, setFinding] = useState<Finding>(initialFinding);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(finding.correctedValue ?? finding.aiValue);
@@ -88,7 +96,13 @@ export function FindingCard({ finding: initialFinding, onUpdate }: FindingCardPr
   };
 
   return (
-    <div className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-5 sm:p-6 shadow-sm transition">
+    <div
+      className={`bg-white border rounded-2xl p-5 sm:p-6 transition ${
+        isHighlighted
+          ? "border-[#005CB9] ring-2 ring-[#005CB9]/30 shadow-md bg-blue-50/10"
+          : "border-slate-200 hover:border-slate-300 shadow-xs"
+      }`}
+    >
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
@@ -266,6 +280,16 @@ export function FindingCard({ finding: initialFinding, onUpdate }: FindingCardPr
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
             >
               <Edit2 className="w-3.5 h-3.5" /> Edit
+            </button>
+          )}
+          {onSelectEvidence && finding.evidenceQuote && (
+            <button
+              type="button"
+              onClick={() => onSelectEvidence(finding.evidenceQuote)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#005CB9] text-xs font-semibold border border-blue-200 transition"
+              title="Locate and highlight this clause in contract document"
+            >
+              <FileSearch className="w-3.5 h-3.5" /> Locate in Doc
             </button>
           )}
           {isEdited && !isEditing && (
