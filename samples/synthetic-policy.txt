@@ -1,0 +1,13 @@
+ACME CORPORATE CONTRACT POLICY & STANDARD GUIDELINES
+
+1. NOTICE PERIODS
+Standard renewal notice periods must be at least ninety (90) days prior to contract expiration. Any contract with an auto-renewal notice requirement of less than 90 days is a policy mismatch and must be flagged for review.
+
+2. PAYMENT TERMS
+Maximum acceptable payment terms are net forty-five (45) days. Contracts requiring payment within 30 days are acceptable but require CFO signoff if over $100k.
+
+3. GOVERNING LAW
+Acceptable governing jurisdictions are Delaware or New York only.
+
+4. MAINTENANCE NOTICE
+Vendor maintenance or downtime windows must be communicated with at least five (5) business days advance written notice. Vague terms such as "reasonable notice" do not meet corporate compliance standards.

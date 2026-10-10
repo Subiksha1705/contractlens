@@ -1,0 +1,33 @@
+MASTER SERVICES AGREEMENT (AMENDED V2)
+
+This Master Services Agreement ("Agreement") is made and entered into as of January 1, 2025 (the "Effective Date"), by and between Acme Global Inc. ("Client"), a Delaware corporation, and Nexus Logic Systems LLC ("Provider"), a California limited liability company.
+
+1. TERM AND DURATION
+1.1 Initial Term. This Agreement shall commence on the Effective Date and shall remain in effect for an initial term of one (1) year, expiring on December 31, 2025 ("Initial Term").
+1.2 Automatic Renewal. Following the Initial Term, this Agreement shall automatically renew for successive terms of one (1) year each, unless either party provides written notice of non-renewal at least ninety (90) days prior to the expiration of the then-current term.
+
+2. TERMINATION
+2.1 Termination for Convenience. Either party may terminate this Agreement without cause upon thirty (30) days prior written notice to the other party.
+2.2 Termination for Cause. Either party may terminate immediately upon written notice if the other party breaches any material term and fails to cure such breach within thirty (30) days of receipt of notice.
+
+3. FEES AND PAYMENT TERMS
+3.1 Invoices and Due Dates. Provider shall invoice Client monthly for services rendered. Client shall pay all undisputed invoice amounts within thirty (30) days of the invoice date.
+3.2 Late Payments. Undisputed past due amounts shall accrue interest at the rate of 1.5% per month or the maximum rate permitted by law.
+
+4. SERVICE LEVELS AND AMBIGUOUS NOTICES
+4.1 System Maintenance. Provider shall use commercially reasonable efforts to maintain 99.9% system availability. Provider may schedule temporary maintenance periods upon providing reasonable notice to Client.
+
+5. DATA PRIVACY AND SECURITY (NEW OBLIGATION)
+5.1 Data Deletion Obligation. Upon expiration or termination of this Agreement, Provider must securely delete all Client confidential data and personal information within fourteen (14) days and provide a written certificate of destruction signed by an officer of Provider.
+
+6. GENERAL PROVISIONS AND NOTICES
+6.1 Legal Notices. All formal legal notices under Section 6 must be delivered in writing via registered mail with forty-five (45) days advance notification to the designated corporate representatives.
+6.2 Governing Law. This Agreement shall be governed by the laws of the State of Delaware.
+
+IN WITNESS WHEREOF, the parties have executed this Agreement as of the Effective Date.
+
+ACME GLOBAL INC. (Client)
+By: Jane Doe, Chief Executive Officer
+
+NEXUS LOGIC SYSTEMS LLC (Provider)
+By: John Smith, Chief Operating Officer

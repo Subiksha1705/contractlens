@@ -31,10 +31,16 @@ export default function Home() {
       {/* Action Buttons */}
       <div className="mt-8 flex flex-wrap items-center gap-4">
         <Link
+          href="/debug/parse"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 transition-colors shadow-sm"
+        >
+          <FileText className="w-4 h-4" /> Try Document Ingestion
+        </Link>
+        <Link
           href="/api/health"
           className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-slate-900 text-white font-medium text-sm hover:bg-slate-800 transition-colors shadow-sm"
         >
-          Check System Health <ArrowRight className="w-4 h-4" />
+          System Health <ArrowRight className="w-4 h-4" />
         </Link>
         <div className="text-xs text-slate-500 font-mono bg-white px-3 py-2 rounded-md border border-slate-200">
           Run: <code className="text-indigo-600 font-semibold">pnpm ai:test</code>
