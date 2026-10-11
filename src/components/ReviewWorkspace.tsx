@@ -14,6 +14,8 @@ import {
   ListFilter,
   BookOpen,
 } from "lucide-react";
+import { Dropdown, DropdownItem } from "@/components/ui/Dropdown";
+
 
 
 interface ReviewWorkspaceProps {
@@ -56,6 +58,21 @@ export function ReviewWorkspace({
     const set = new Set(findingsList.map((f) => f.type));
     return Array.from(set).sort();
   }, [findingsList]);
+
+  // Reusable Dropdown items for Clause Type filter
+  const typeDropdownItems: DropdownItem[] = useMemo(
+    () => [
+      { id: "all", label: `All Types (${availableTypes.length})` },
+      ...availableTypes.map((t) => ({
+        id: t,
+        label: t.toUpperCase(),
+        badge: String(findingsList.filter((f) => f.type === t).length),
+        badgeColor: "blue" as const,
+      })),
+    ],
+    [availableTypes, findingsList]
+  );
+
 
   // Metric counts
   const counts = useMemo(() => {
@@ -274,21 +291,17 @@ export function ReviewWorkspace({
 
                 {availableTypes.length > 0 && (
                   <div className="flex items-center gap-1.5 ml-auto">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Type:</span>
-                    <select
-                      value={typeFilter}
-                      onChange={(e) => setTypeFilter(e.target.value)}
-                      className="text-[11px] font-semibold bg-white border border-slate-200 rounded-lg px-2 py-0.5 text-slate-700 focus:outline-hidden focus:ring-1 focus:ring-[#005CB9]"
-                    >
-                      <option value="all">All Types ({availableTypes.length})</option>
-                      {availableTypes.map((t) => (
-                        <option key={t} value={t}>
-                          {t.toUpperCase()}
-                        </option>
-                      ))}
-                    </select>
+                    <Dropdown
+                      label={typeFilter === "all" ? "All Types" : typeFilter.toUpperCase()}
+                      items={typeDropdownItems}
+                      selectedId={typeFilter}
+                      onSelect={(item) => setTypeFilter(item.id)}
+                      buttonVariant="subtle"
+                      align="right"
+                    />
                   </div>
                 )}
+
               </div>
             </div>
 

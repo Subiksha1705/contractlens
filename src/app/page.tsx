@@ -102,9 +102,10 @@ export default async function Home() {
         </Link>
 
         <Link
-          href="/api/health"
+          href="/health"
           className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-md transition group"
         >
+
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center mb-3 group-hover:scale-105 transition">
             <CheckCircle2 className="w-5 h-5" />
           </div>
