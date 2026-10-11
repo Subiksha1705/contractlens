@@ -61,4 +61,48 @@ describe("Enhanced UI: Delete Contract & Reusable Dropdowns", () => {
     const checkFindings = await db.select().from(findings).where(eq(findings.versionId, versionId));
     expect(checkFindings.length).toBe(0);
   });
+
+  it("bulk deletes multiple contracts and cascade deletes their records", async () => {
+    const db = getDb();
+    const c1 = await db.insert(contracts).values({ title: "Bulk Delete Test 1" }).returning();
+    const c2 = await db.insert(contracts).values({ title: "Bulk Delete Test 2" }).returning();
+    const ids = [c1[0].id, c2[0].id];
+
+    await db.insert(contractVersions).values([
+      {
+        contractId: ids[0],
+        versionNumber: 1,
+        sourceKind: "text",
+        fullText: "Contract 1 text",
+        aiProvider: "mock",
+        aiModel: "mock-v1",
+        extractionStatus: "ok",
+      },
+      {
+        contractId: ids[1],
+        versionNumber: 1,
+        sourceKind: "text",
+        fullText: "Contract 2 text",
+        aiProvider: "mock",
+        aiModel: "mock-v1",
+        extractionStatus: "ok",
+      },
+    ]);
+
+    const { inArray } = await import("drizzle-orm");
+    const deleted = await db
+      .delete(contracts)
+      .where(inArray(contracts.id, ids))
+      .returning({ id: contracts.id });
+    expect(deleted.length).toBe(2);
+
+    const remaining = await db.select().from(contracts).where(inArray(contracts.id, ids));
+    expect(remaining.length).toBe(0);
+
+    const remainingVersions = await db
+      .select()
+      .from(contractVersions)
+      .where(inArray(contractVersions.contractId, ids));
+    expect(remainingVersions.length).toBe(0);
+  });
 });

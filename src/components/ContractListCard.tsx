@@ -26,11 +26,40 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [showCleanModal, setShowCleanModal] = useState(false);
   const [isCleaning, setIsCleaning] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const filteredContracts = contracts.filter((c) =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase().trim())
   );
+
+  const isAllSelected =
+    filteredContracts.length > 0 &&
+    filteredContracts.every((c) => selectedIds.has(c.id));
+  const isSomeSelected =
+    filteredContracts.some((c) => selectedIds.has(c.id)) && !isAllSelected;
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredContracts.map((c) => c.id)));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -44,11 +73,40 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
         throw new Error(data.error || "Failed to delete contract");
       }
       setContracts((prev) => prev.filter((c) => c.id !== id));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       setConfirmDeleteId(null);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error deleting contract");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setIsBulkDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/contracts/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to bulk delete contracts");
+      }
+      setContracts((prev) => prev.filter((c) => !selectedIds.has(c.id)));
+      setSelectedIds(new Set());
+      setShowBulkDeleteModal(false);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error cleaning database");
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -64,6 +122,7 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
         throw new Error(data.error || "Failed to clean database");
       }
       setContracts([]);
+      setSelectedIds(new Set());
       setShowCleanModal(false);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error cleaning database");
@@ -167,6 +226,94 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
         </div>
       )}
 
+      {/* Bulk Delete Confirmation Safety Modal */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl border border-slate-200">
+            <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-3">
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <h4 className="text-base font-bold text-slate-900">
+              Delete {selectedIds.size} Selected {selectedIds.size === 1 ? "Agreement" : "Agreements"}?
+            </h4>
+            <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+              This will permanently remove the {selectedIds.size} selected contracts, including all associated versions, extracted obligations, deadlines, and audit history. This action cannot be undone.
+            </p>
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteModal(false)}
+                disabled={isBulkDeleting}
+                className="px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs transition"
+              >
+                {isBulkDeleting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Deleting...
+                  </>
+                ) : (
+                  `Yes, Delete (${selectedIds.size})`
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Action Bar / Select All Header */}
+      {filteredContracts.length > 0 && (
+        <div className="mb-3 flex items-center justify-between px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50/60 transition">
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={isAllSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = isSomeSelected;
+              }}
+              onChange={toggleSelectAll}
+              className="w-4 h-4 rounded text-[#005CB9] focus:ring-[#005CB9] border-slate-300 cursor-pointer"
+            />
+            <span className="text-xs font-semibold text-slate-700">
+              {selectedIds.size > 0
+                ? `${selectedIds.size} of ${filteredContracts.length} selected`
+                : "Select All"}
+            </span>
+          </label>
+
+          <div className="flex items-center gap-2">
+            {selectedIds.size > 0 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds(new Set())}
+                  className="text-xs font-medium text-slate-500 hover:text-slate-800 transition"
+                >
+                  Clear Selection
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBulkDeleteModal(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs transition"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Bulk Delete ({selectedIds.size})
+                </button>
+              </>
+            ) : (
+              <span className="text-[11px] text-slate-400">
+                {filteredContracts.length} {filteredContracts.length === 1 ? "agreement" : "agreements"}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Internal Scrollable Contracts Container */}
       <div className="max-h-[460px] overflow-y-auto scrollbar-thin border border-slate-100 rounded-2xl divide-y divide-slate-100 bg-white">
@@ -174,20 +321,39 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
           filteredContracts.map((c) => (
             <div
               key={c.id}
-              className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/80 transition group"
+              className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition group ${
+                selectedIds.has(c.id)
+                  ? "bg-blue-50/40 border-l-4 border-l-[#005CB9]"
+                  : "hover:bg-slate-50/80"
+              }`}
             >
-              <div className="min-w-0 flex-1">
-                <Link
-                  href={`/contracts/${c.id}`}
-                  className="text-sm font-bold text-slate-900 hover:text-[#005CB9] transition flex items-center gap-1.5 truncate"
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                {/* Row Checkbox */}
+                <label
+                  className="flex items-center justify-center p-1 -ml-1 cursor-pointer shrink-0 rounded hover:bg-slate-200/50 transition"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <span className="truncate">{c.title}</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition shrink-0" />
-                </Link>
-                <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  Uploaded on {new Date(c.createdAt).toLocaleDateString()}
-                </p>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(c.id)}
+                    onChange={() => toggleSelectOne(c.id)}
+                    className="w-4 h-4 rounded text-[#005CB9] focus:ring-[#005CB9] border-slate-300 cursor-pointer"
+                  />
+                </label>
+
+                <div className="min-w-0 flex-1">
+                  <Link
+                    href={`/contracts/${c.id}`}
+                    className="text-sm font-bold text-slate-900 hover:text-[#005CB9] transition flex items-center gap-1.5 truncate"
+                  >
+                    <span className="truncate">{c.title}</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition shrink-0" />
+                  </Link>
+                  <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" />
+                    Uploaded on {new Date(c.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
 
               {/* Direct Action Buttons - Less Clicks */}
