@@ -158,7 +158,7 @@ export default async function ContractDashboardPage({
         </div>
       </div>
 
-      {/* 1. Stat Cards Row */}
+      {/* 1. Stat Cards Row (Interactive with 1-click drill-downs) */}
       <StatCards
         totalFindings={stats.totalFindings}
         approvedCount={stats.approvedCount}
@@ -167,19 +167,67 @@ export default async function ContractDashboardPage({
         uncertainCount={stats.uncertainCount}
         unverifiedCount={stats.unverifiedCount}
         totalVersions={stats.totalVersions}
+        contractId={id}
+        versionId={version.id}
       />
 
       {/* 2. Visual Charts Row (2 Columns) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         {/* Status Breakdown (Donut Chart) */}
-        <StatusChart data={stats.byStatus} />
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-xs">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                Review Status Breakdown
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Approved vs pending review findings
+              </p>
+            </div>
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">
+              {stats.totalFindings} clauses
+            </span>
+          </div>
+          <StatusChart data={stats.byStatus} />
+        </div>
 
         {/* Clause Types Distribution (Bar Chart) */}
-        <TypeChart data={stats.byType} />
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-xs">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#005CB9]" />
+                Clause Types Distribution
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Breakdown across extracted legal categories
+              </p>
+            </div>
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">
+              {stats.byType.length} categories
+            </span>
+          </div>
+          <TypeChart data={stats.byType} />
+        </div>
       </div>
 
       {/* 3. Upcoming Obligations Time Horizon (Full Width) */}
-      <div className="mt-8">
+      <div className="mt-8 bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-xs">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-500" />
+              Upcoming Obligations & Deadlines
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Extracted contract deadlines and expiration milestones grouped by time windows
+            </p>
+          </div>
+          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
+            Time Horizons
+          </span>
+        </div>
         <DeadlineWindowChart data={stats.deadlinesByWindow} />
       </div>
     </div>

@@ -25,7 +25,7 @@ export function TypeChart({ data }: TypeChartProps) {
   }
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-64 w-full outline-none select-none">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
@@ -41,15 +41,17 @@ export function TypeChart({ data }: TypeChartProps) {
             tick={{ fontSize: 11, fill: "#475569", fontWeight: 600 }}
           />
           <Tooltip
+            cursor={{ fill: "rgba(0, 92, 185, 0.04)" }}
             formatter={(value: unknown) => [`${value} items`, "Count"]}
             contentStyle={{
               backgroundColor: "#ffffff",
               borderRadius: "12px",
               border: "1px solid #e2e8f0",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
               fontSize: "12px",
             }}
           />
-          <Bar dataKey="count" fill="#6366f1" radius={[0, 6, 6, 0]} />
+          <Bar dataKey="count" fill="#005CB9" radius={[0, 6, 6, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

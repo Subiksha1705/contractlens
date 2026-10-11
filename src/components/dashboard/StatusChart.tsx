@@ -29,7 +29,7 @@ export function StatusChart({ data }: StatusChartProps) {
   const activeData = data.filter((d) => d.count > 0);
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-64 w-full outline-none select-none">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -47,11 +47,13 @@ export function StatusChart({ data }: StatusChartProps) {
             ))}
           </Pie>
           <Tooltip
+            cursor={false}
             formatter={(value: unknown, name: unknown) => [`${value} items`, String(name)]}
             contentStyle={{
               backgroundColor: "#ffffff",
               borderRadius: "12px",
               border: "1px solid #e2e8f0",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
               fontSize: "12px",
               fontWeight: 500,
             }}

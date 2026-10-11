@@ -105,7 +105,7 @@ export function Dropdown({
         onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="true"
         aria-expanded={isOpen}
-        className={`inline-flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition focus:outline-hidden focus:ring-2 focus:ring-[#005CB9] ${getButtonStyles()}`}
+        className={`inline-flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005CB9] ${getButtonStyles()}`}
       >
         <span className="flex items-center gap-1.5 truncate">
           {icon}

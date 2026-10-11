@@ -24,6 +24,8 @@ interface ReviewWorkspaceProps {
   sourceKind?: string;
   contractTitle?: string;
   contractId?: string;
+  initialStatus?: string;
+  initialCertainty?: string;
 }
 
 export function ReviewWorkspace({
@@ -31,11 +33,13 @@ export function ReviewWorkspace({
   rawText = "",
   fileName,
   sourceKind = "pdf",
+  initialStatus = "all",
+  initialCertainty = "all",
 }: ReviewWorkspaceProps) {
   const { toast } = useToast();
   const [findingsList, setFindingsList] = useState<Finding[]>(initialFindings);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [certaintyFilter, setCertaintyFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>(initialStatus);
+  const [certaintyFilter, setCertaintyFilter] = useState<string>(initialCertainty);
   const [typeFilter, setTypeFilter] = useState<string>("all");
 
   // Active view tab: "findings" | "deadlines"
@@ -261,7 +265,7 @@ export function ReviewWorkspace({
                     key={btn.id}
                     type="button"
                     onClick={() => setStatusFilter(btn.id)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005CB9] ${
                       statusFilter === btn.id
                         ? "bg-[#005CB9] text-white shadow-xs"
                         : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
@@ -279,7 +283,7 @@ export function ReviewWorkspace({
                   <button
                     type="button"
                     onClick={() => setCertaintyFilter(certaintyFilter === "uncertain" ? "all" : "uncertain")}
-                    className={`px-2 py-0.5 rounded text-[11px] font-semibold transition ${
+                    className={`px-2 py-0.5 rounded text-[11px] font-semibold transition outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005CB9] ${
                       certaintyFilter === "uncertain"
                         ? "bg-amber-600 text-white shadow-xs"
                         : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"

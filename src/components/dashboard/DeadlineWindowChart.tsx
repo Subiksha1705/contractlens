@@ -37,7 +37,7 @@ export function DeadlineWindowChart({ data }: DeadlineWindowChartProps) {
   }
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-64 w-full outline-none select-none">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
@@ -53,11 +53,13 @@ export function DeadlineWindowChart({ data }: DeadlineWindowChartProps) {
           />
           <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748b" }} />
           <Tooltip
+            cursor={{ fill: "rgba(0, 92, 185, 0.04)" }}
             formatter={(value: unknown) => [`${value} deadlines`, "Count"]}
             contentStyle={{
               backgroundColor: "#ffffff",
               borderRadius: "12px",
               border: "1px solid #e2e8f0",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
               fontSize: "12px",
             }}
           />

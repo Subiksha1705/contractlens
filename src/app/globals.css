@@ -71,3 +71,22 @@ body,
   border-radius: 2px;
   transition: all 0.3s ease;
 }
+
+/* Suppress unwanted browser blue focus lines on SVGs, Recharts elements & buttons */
+svg,
+svg *,
+.recharts-surface,
+.recharts-wrapper,
+.recharts-layer,
+.recharts-bar-rectangle,
+.recharts-pie-sector,
+.recharts-sector,
+*:focus:not(:focus-visible) {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.recharts-tooltip-cursor {
+  stroke: transparent !important;
+  fill: rgba(0, 92, 185, 0.04) !important;
+}

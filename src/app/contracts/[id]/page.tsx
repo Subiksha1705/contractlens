@@ -26,7 +26,7 @@ export default async function ContractReviewPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{ versionId?: string; error?: string }>;
+  searchParams?: Promise<{ versionId?: string; error?: string; status?: string; certainty?: string }>;
 }) {
   const { id } = await params;
   const sParams = searchParams ? await searchParams : {};
@@ -195,6 +195,8 @@ export default async function ContractReviewPage({
           sourceKind={version.sourceKind}
           contractTitle={contract.title}
           contractId={contract.id}
+          initialStatus={sParams.status}
+          initialCertainty={sParams.certainty}
         />
       )}
     </div>
