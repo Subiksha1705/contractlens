@@ -1,0 +1,477 @@
+{
+  "id": "24e3f8fb-d496-466c-a51f-33e8cbb05b8a",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.audit_events": {
+      "name": "audit_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "contract_id": {
+          "name": "contract_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_id": {
+          "name": "version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finding_id": {
+          "name": "finding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "detail": {
+          "name": "detail",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "audit_events_contract_id_contracts_id_fk": {
+          "name": "audit_events_contract_id_contracts_id_fk",
+          "tableFrom": "audit_events",
+          "tableTo": "contracts",
+          "columnsFrom": [
+            "contract_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "audit_events_version_id_contract_versions_id_fk": {
+          "name": "audit_events_version_id_contract_versions_id_fk",
+          "tableFrom": "audit_events",
+          "tableTo": "contract_versions",
+          "columnsFrom": [
+            "version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "audit_events_finding_id_findings_id_fk": {
+          "name": "audit_events_finding_id_findings_id_fk",
+          "tableFrom": "audit_events",
+          "tableTo": "findings",
+          "columnsFrom": [
+            "finding_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.contract_versions": {
+      "name": "contract_versions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "contract_id": {
+          "name": "contract_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_number": {
+          "name": "version_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_kind": {
+          "name": "source_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "full_text": {
+          "name": "full_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pages": {
+          "name": "pages",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "policy_text": {
+          "name": "policy_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "truncated": {
+          "name": "truncated",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "ai_provider": {
+          "name": "ai_provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ai_model": {
+          "name": "ai_model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "extraction_status": {
+          "name": "extraction_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "extraction_error": {
+          "name": "extraction_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "contract_versions_contract_version_idx": {
+          "name": "contract_versions_contract_version_idx",
+          "columns": [
+            {
+              "expression": "contract_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "contract_versions_contract_id_contracts_id_fk": {
+          "name": "contract_versions_contract_id_contracts_id_fk",
+          "tableFrom": "contract_versions",
+          "tableTo": "contracts",
+          "columnsFrom": [
+            "contract_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.contracts": {
+      "name": "contracts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.findings": {
+      "name": "findings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "version_id": {
+          "name": "version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ai_value": {
+          "name": "ai_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ai_responsible_party": {
+          "name": "ai_responsible_party",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "certainty": {
+          "name": "certainty",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uncertainty_reason": {
+          "name": "uncertainty_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "clarification_question": {
+          "name": "clarification_question",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "evidence_quote": {
+          "name": "evidence_quote",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence_status": {
+          "name": "evidence_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "page": {
+          "name": "page",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "section": {
+          "name": "section",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "char_start": {
+          "name": "char_start",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "char_end": {
+          "name": "char_end",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deadline_spec": {
+          "name": "deadline_spec",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deadline_date": {
+          "name": "deadline_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deadline_basis": {
+          "name": "deadline_basis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deadline_flag": {
+          "name": "deadline_flag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_status": {
+          "name": "review_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "corrected_value": {
+          "name": "corrected_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "corrected_responsible_party": {
+          "name": "corrected_responsible_party",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "corrected_deadline_date": {
+          "name": "corrected_deadline_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stale_reason": {
+          "name": "stale_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "carried_from_finding_id": {
+          "name": "carried_from_finding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "findings_version_id_contract_versions_id_fk": {
+          "name": "findings_version_id_contract_versions_id_fk",
+          "tableFrom": "findings",
+          "tableTo": "contract_versions",
+          "columnsFrom": [
+            "version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

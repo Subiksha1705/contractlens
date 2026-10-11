@@ -15,7 +15,7 @@ This Master Services Agreement ("Agreement") is made between Acme Corporation ("
 The Effective Date of this Agreement shall be January 1, 2025.
 This Agreement shall commence on the Effective Date and continue for an initial term of one (1) year.
 The Agreement shall automatically renew for successive terms of one (1) year unless either party gives written notice.
-written notice of non-renewal at least sixty (60) days prior to the expiration of the then-current term.
+unless either party provides written notice of non-renewal at least sixty (60) days prior to the expiration of the then-current term.
 Either party may terminate this Agreement for convenience upon thirty (30) days prior written notice.
 Client shall pay all undisputed invoice amounts within thirty (30) days of receipt.
 Provider may adjust maintenance schedules upon providing reasonable notice.
@@ -28,7 +28,7 @@ This Master Services Agreement ("Agreement") is made between Acme Corporation ("
 The Effective Date of this Agreement shall be January 1, 2025.
 This Agreement shall commence on the Effective Date and continue for an initial term of one (1) year.
 The Agreement shall automatically renew for successive terms of one (1) year unless either party gives written notice.
-written notice of non-renewal at least ninety (90) days prior to the expiration of the then-current term.
+unless either party provides written notice of non-renewal at least ninety (90) days prior to the expiration of the then-current term.
 Either party may terminate this Agreement for convenience upon thirty (30) days prior written notice.
 Client shall pay all undisputed invoice amounts within thirty (30) days of receipt.
 Provider may adjust maintenance schedules upon providing reasonable notice.
@@ -119,7 +119,7 @@ All legal notices under Section 11 must be delivered in writing with forty-five 
         );
         if (noticeItem) {
           noticeItem.value = "Written notice of non-renewal must be provided at least ninety (90) days prior to expiration.";
-          noticeItem.quote = "written notice of non-renewal at least ninety (90) days prior to the expiration of the then-current term.";
+          noticeItem.quote = "unless either party provides written notice of non-renewal at least ninety (90) days prior to the expiration of the then-current term.";
         }
         return {
           rawJson: JSON.stringify(json),

@@ -1,19 +1,33 @@
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "./client";
+import { ensureTablesExist } from "./init";
 import { contracts, contractVersions, findings, auditEvents } from "./schema";
 
 export async function listContracts() {
+  await ensureTablesExist();
   const db = getDb();
-  return db.select().from(contracts).orderBy(desc(contracts.createdAt));
+  try {
+    return await db.select().from(contracts).orderBy(desc(contracts.createdAt));
+  } catch (err) {
+    console.error("Failed to query contracts:", err);
+    return [];
+  }
+}
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function isUuid(val: unknown): val is string {
+  return typeof val === "string" && UUID_REGEX.test(val);
 }
 
 export async function getContractById(id: string) {
+  if (!isUuid(id)) return null;
   const db = getDb();
   const rows = await db.select().from(contracts).where(eq(contracts.id, id)).limit(1);
   return rows[0] ?? null;
 }
 
 export async function getLatestVersion(contractId: string) {
+  if (!isUuid(contractId)) return null;
   const db = getDb();
   const rows = await db
     .select()
@@ -25,6 +39,7 @@ export async function getLatestVersion(contractId: string) {
 }
 
 export async function listVersionsByContract(contractId: string) {
+  if (!isUuid(contractId)) return [];
   const db = getDb();
   return db
     .select()
@@ -34,6 +49,7 @@ export async function listVersionsByContract(contractId: string) {
 }
 
 export async function getVersionById(versionId: string) {
+  if (!isUuid(versionId)) return null;
   const db = getDb();
   const rows = await db
     .select()
@@ -44,11 +60,13 @@ export async function getVersionById(versionId: string) {
 }
 
 export async function getFindingsByVersion(versionId: string) {
+  if (!isUuid(versionId)) return [];
   const db = getDb();
   return db.select().from(findings).where(eq(findings.versionId, versionId));
 }
 
 export async function getAuditEvents(contractId: string) {
+  if (!isUuid(contractId)) return [];
   const db = getDb();
   return db
     .select()
@@ -79,6 +97,7 @@ export async function getContractDashboardStats(
   versionId?: string,
   todayDate: Date = new Date()
 ): Promise<DashboardStats | null> {
+  if (!isUuid(contractId) || (versionId && !isUuid(versionId))) return null;
   const db = getDb();
 
   const [contract] = await db

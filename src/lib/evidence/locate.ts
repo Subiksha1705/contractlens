@@ -66,7 +66,21 @@ export function locateQuote(
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i].trim();
       if (SECTION_HEADING_REGEX.test(line)) {
-        section = line.slice(0, 100);
+        // Look for heading title before sentence continuation
+        const inlineTitleMatch = line.match(
+          /^((?:article|section|clause)?\s*\d+(?:\.\d+)*[.)]?\s+[^.!?:\n]{2,70})(?:\.\s+[A-Z]|\s*[:—–-]\s*[A-Z]|\s*$)/i
+        );
+
+        if (inlineTitleMatch && inlineTitleMatch[1]) {
+          section = inlineTitleMatch[1].trim();
+        } else {
+          const firstSentenceEnd = line.indexOf(". ");
+          if (firstSentenceEnd !== -1 && firstSentenceEnd <= 70) {
+            section = line.slice(0, firstSentenceEnd).trim();
+          } else {
+            section = line.length <= 70 ? line : line.slice(0, 70).trim();
+          }
+        }
         break;
       }
     }

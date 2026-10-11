@@ -71,14 +71,19 @@ export function computeDeadlinesForFindings<T extends FindingDeadlineInput>(
         break;
       }
       if (spec?.anchor === "effective_date" && effectiveDateStr) {
+        if (spec.amount == null || !spec.unit || !spec.direction) {
+          // Do not guess missing amount, unit, or direction
+          continue;
+        }
         const effDate = parseISO(effectiveDateStr);
-        const amount = spec.amount ?? 1;
-        const unit = spec.unit ?? "years";
-        const dir = spec.direction ?? "after";
+        const amount = spec.amount;
+        const unit = spec.unit;
+        const dir = spec.direction;
 
         let computed: Date;
         if (unit === "years") computed = dir === "before" ? subYears(effDate, amount) : addYears(effDate, amount);
         else if (unit === "months") computed = dir === "before" ? subMonths(effDate, amount) : addMonths(effDate, amount);
+        else if (unit === "weeks") computed = dir === "before" ? subDays(effDate, amount * 7) : addDays(effDate, amount * 7);
         else computed = dir === "before" ? subDays(effDate, amount) : addDays(effDate, amount);
 
         expiryDateStr = formatDateString(computed);
@@ -139,7 +144,7 @@ export function computeDeadlinesForFindings<T extends FindingDeadlineInput>(
 
     // Event anchor -> requires human trigger date
     if (spec.anchor === "event") {
-      const amount = spec.amount ? `${spec.amount} ${spec.unit ?? "days"}` : "Unspecified window";
+      const amount = spec.amount != null ? `${spec.amount} ${spec.unit ?? "days"}` : "Unspecified window";
       results.set(f, {
         deadlineDate: null,
         deadlineBasis: `Contingent on event occurrence (${amount} ${spec.direction ?? "after"} event)`,
@@ -163,39 +168,74 @@ export function computeDeadlinesForFindings<T extends FindingDeadlineInput>(
         continue;
       }
 
+      // PRD §8.2: Never guess dates if amount, unit, or direction is missing
+      if (spec.amount == null || !spec.unit || !spec.direction) {
+        const missingFields = [
+          spec.amount == null ? "amount" : null,
+          !spec.unit ? "unit" : null,
+          !spec.direction ? "direction" : null,
+        ]
+          .filter(Boolean)
+          .join(", ");
+
+        results.set(f, {
+          deadlineDate: null,
+          deadlineBasis: `Cannot calculate deadline: missing ${missingFields} in specification`,
+          deadlineFlag: "needs_human_date",
+        });
+        continue;
+      }
+
       const baseDate = parseISO(anchorDateStr);
-      const amount = spec.amount ?? 0;
-      const unit = spec.unit ?? "days";
-      const direction = spec.direction ?? "before";
+      const amount = spec.amount;
+      const unit = spec.unit;
+      const direction = spec.direction;
       const dayType = spec.day_type ?? "unspecified";
 
       let computedDate: Date;
-      let dayTypeDesc: string;
+      let basis: string;
       let flag: "assumed_calendar_days" | "needs_human_date" | null = null;
 
       if (dayType === "business") {
-        dayTypeDesc = "business days (skipping weekends; holidays not considered)";
-        computedDate = direction === "before" ? subBusinessDays(baseDate, amount) : addBusinessDays(baseDate, amount);
+        let businessDaysCount = amount;
+        if (unit === "weeks") {
+          businessDaysCount = amount * 5;
+        }
+
+        computedDate =
+          direction === "before"
+            ? subBusinessDays(baseDate, businessDaysCount)
+            : addBusinessDays(baseDate, businessDaysCount);
+
+        const unitDesc =
+          unit === "weeks"
+            ? `${amount} business ${amount === 1 ? "week" : "weeks"} (${businessDaysCount} business days, skipping weekends; holidays not considered)`
+            : `${amount} business ${amount === 1 ? "day" : "days"} (skipping weekends; holidays not considered)`;
+
+        basis = `${anchorName} ${anchorDateStr} ${direction === "before" ? "minus" : "plus"} ${unitDesc}`;
       } else {
         if (dayType === "unspecified") {
-          dayTypeDesc = "calendar days (assumed calendar days)";
           flag = "assumed_calendar_days";
-        } else {
-          dayTypeDesc = "calendar days";
         }
 
+        let unitLabel: string;
         if (unit === "years") {
           computedDate = direction === "before" ? subYears(baseDate, amount) : addYears(baseDate, amount);
+          unitLabel = amount === 1 ? "year" : "years";
         } else if (unit === "months") {
           computedDate = direction === "before" ? subMonths(baseDate, amount) : addMonths(baseDate, amount);
+          unitLabel = amount === 1 ? "month" : "months";
         } else if (unit === "weeks") {
           computedDate = direction === "before" ? subDays(baseDate, amount * 7) : addDays(baseDate, amount * 7);
+          unitLabel = amount === 1 ? "week" : "weeks";
         } else {
           computedDate = direction === "before" ? subDays(baseDate, amount) : addDays(baseDate, amount);
+          unitLabel = amount === 1 ? "calendar day" : "calendar days";
         }
-      }
 
-      const basis = `${anchorName} ${anchorDateStr} ${direction === "before" ? "minus" : "plus"} ${amount} ${dayTypeDesc}`;
+        const note = dayType === "unspecified" ? " (assumed calendar days)" : "";
+        basis = `${anchorName} ${anchorDateStr} ${direction === "before" ? "minus" : "plus"} ${amount} ${unitLabel}${note}`;
+      }
 
       results.set(f, {
         deadlineDate: formatDateString(computedDate),

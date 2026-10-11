@@ -22,7 +22,7 @@ interface UploadFormProps {
 }
 
 export function UploadForm({
-  endpoint = "/api/debug/parse",
+  endpoint = "/api/contracts",
   redirectOnSuccess = false,
 }: UploadFormProps) {
   const router = useRouter();

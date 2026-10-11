@@ -7,6 +7,7 @@ import {
   NewFinding,
 } from "../db/schema";
 import { parseDocument, ParseDocumentInput } from "../parse";
+import { PageOffset } from "../parse/pages";
 import { getProvider, AiProvider } from "../ai/adapter";
 import {
   aiExtractionSchema,
@@ -24,6 +25,8 @@ export interface IngestOptions {
   contractId?: string; // If creating a new version of existing contract
   policyText?: string;
   providerOverride?: AiProvider;
+  sourceKindOverride?: "pdf" | "docx" | "text";
+  pagesOverride?: PageOffset[] | null;
 }
 
 export interface IngestResult {
@@ -46,6 +49,12 @@ export async function ingestContract(
 
   // 1. Deterministic Parse
   const parsed = await parseDocument(input);
+  if (options.sourceKindOverride) {
+    parsed.kind = options.sourceKindOverride;
+  }
+  if (options.pagesOverride !== undefined) {
+    parsed.pages = options.pagesOverride;
+  }
 
   // 2. Truncation Guard
   let fullText = parsed.text;
@@ -161,6 +170,7 @@ export async function ingestContract(
     detail: {
       provider: provider.name,
       model: provider.model,
+      inputChars: fullText.length,
       latencyMs: aiLatencyMs,
       usage: tokenUsage ?? null,
       status: extractionStatus,

@@ -7,11 +7,21 @@ import { eq, desc } from "drizzle-orm";
 
 export const maxDuration = 60;
 
+import { isUuid } from "@/lib/db/queries";
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  if (!isUuid(id)) {
+    return NextResponse.json(
+      { success: false, error: "Contract not found." },
+      { status: 404 }
+    );
+  }
+
   try {
     const db = getDb();
 

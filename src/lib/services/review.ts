@@ -131,7 +131,16 @@ export async function updateFindingReview(
       },
     });
 
-    return { finding: updated, previousStatus };
+    // Recompute version deadlines so reset findings revert from "User-corrected" to AI values
+    await recomputeVersionDeadlines(current.versionId);
+
+    const [refreshed] = await db
+      .select()
+      .from(findings)
+      .where(eq(findings.id, findingId))
+      .limit(1);
+
+    return { finding: refreshed || updated, previousStatus };
   }
 
   if (input.action === "edit") {

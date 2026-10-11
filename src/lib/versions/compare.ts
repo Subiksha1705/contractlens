@@ -113,7 +113,7 @@ export async function compareVersions(
 
     const oldQuoteInNewText = newTextNormalized.includes(normalize(old.evidenceQuote));
 
-    if (!bestMatch || bestSimilarity < 0.7) {
+    if (!bestMatch || bestSimilarity < 0.8) {
       // 2. No match -> old finding potentially_stale
       const reason = oldQuoteInNewText
         ? `Clause re-evaluated in version ${newVersion.versionNumber}`
@@ -147,19 +147,27 @@ export async function compareVersions(
     } else {
       matchedNewFindingIds.add(bestMatch.id);
 
-      // 3. Matched: Check if value or deadline differs
-      const oldEffectiveValue = (old.correctedValue ?? old.aiValue).trim();
-      const newEffectiveValue = bestMatch.aiValue.trim();
-      const oldEffectiveDeadline = old.correctedDeadlineDate ?? old.deadlineDate;
-      const newEffectiveDeadline = bestMatch.deadlineDate;
+      // 3. Matched: Check if underlying AI value or deadline differs in the contract
+      const oldAiValue = old.aiValue.trim();
+      const newAiValue = bestMatch.aiValue.trim();
+      const valueChanged = oldAiValue !== newAiValue;
 
-      const valueChanged = oldEffectiveValue !== newEffectiveValue;
-      const deadlineChanged = oldEffectiveDeadline !== newEffectiveDeadline;
+      const oldAiDeadline = old.deadlineDate;
+      const newAiDeadline = bestMatch.deadlineDate;
+      const deadlineChanged = oldAiDeadline !== newAiDeadline;
 
       if (valueChanged || deadlineChanged) {
-        // Matched but value or deadline differs -> potentially_stale
-        const reason = `Value changed in version ${newVersion.versionNumber}`;
-        const newFindingStaleReason = `Value changed from version ${prevVersion.versionNumber}: was "${oldEffectiveValue}"`;
+        // Matched but contract clause or deadline changed -> potentially_stale
+        const reason = valueChanged
+          ? `Value changed in version ${newVersion.versionNumber}`
+          : `Deadline changed in version ${newVersion.versionNumber}`;
+
+        const newFindingStaleReason = valueChanged
+          ? `Value changed from version ${prevVersion.versionNumber}: was "${oldAiValue}"`
+          : `Deadline changed from version ${prevVersion.versionNumber}: was "${oldAiDeadline ?? "None"}"`;
+
+        const staleOldVal = valueChanged ? oldAiValue : (oldAiDeadline ?? "None");
+        const staleNewVal = valueChanged ? newAiValue : (newAiDeadline ?? "None");
 
         // Flag old finding
         await db
@@ -189,10 +197,8 @@ export async function compareVersions(
             reason,
             oldFindingId: old.id,
             newFindingId: bestMatch.id,
-            previousValue: oldEffectiveValue,
-            newValue: newEffectiveValue,
-            previousDeadline: oldEffectiveDeadline,
-            newDeadline: newEffectiveDeadline,
+            previousValue: staleOldVal,
+            newValue: staleNewVal,
           },
         });
 
@@ -201,20 +207,21 @@ export async function compareVersions(
           oldFindingId: old.id,
           newFindingId: bestMatch.id,
           reason,
-          oldValue: oldEffectiveValue,
-          newValue: newEffectiveValue,
+          oldValue: staleOldVal,
+          newValue: staleNewVal,
         });
       } else {
-        // 4. Matched and identical -> carry forward
+        // 4. Matched and identical in contract text/deadline -> carry forward
+        // Preserve humans' review status: if old was pending, it remains pending (do NOT auto-approve!)
         await db
           .update(findings)
           .set({
-            reviewStatus: "approved",
+            reviewStatus: old.reviewStatus,
             carriedFromFindingId: old.id,
             correctedValue: old.correctedValue,
             correctedResponsibleParty: old.correctedResponsibleParty,
             correctedDeadlineDate: old.correctedDeadlineDate,
-            reviewedAt: old.reviewedAt ?? new Date(),
+            reviewedAt: old.reviewedAt,
           })
           .where(eq(findings.id, bestMatch.id));
 

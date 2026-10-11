@@ -6,19 +6,14 @@ import { getDb } from "@/lib/db/client";
 import { findings, auditEvents } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
+import * as fs from "fs";
+import * as path from "path";
+
 describe("Phase 4: Review Workspace Service (Zero AI Usage on Review)", () => {
-  const sampleContract = `
-MASTER SERVICES AGREEMENT
-This Master Services Agreement ("Agreement") is made between Acme Corporation ("Client") and Nexus Solutions LLC ("Provider").
-The Effective Date of this Agreement shall be January 1, 2025.
-This Agreement shall commence on the Effective Date and continue for an initial term of one (1) year.
-The Agreement shall automatically renew for successive terms of one (1) year unless either party gives written notice.
-written notice of non-renewal at least sixty (60) days prior to the expiration of the then-current term.
-Either party may terminate this Agreement for convenience upon thirty (30) days prior written notice.
-Client shall pay all undisputed invoice amounts within thirty (30) days of receipt.
-Provider may adjust maintenance schedules upon providing reasonable notice.
-All legal notices under Section 11 must be delivered in writing with forty-five (45) days advance notification.
-  `.trim();
+  const sampleContract = fs.readFileSync(
+    path.join(process.cwd(), "samples/synthetic-contract-v1.txt"),
+    "utf8"
+  );
 
   async function setupTestContractAndFindings() {
     const ingestRes = await ingestContract(

@@ -16,7 +16,13 @@ import { ContractListCard } from "@/components/ContractListCard";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const contractsList = await listContracts();
+  let contractsList: Awaited<ReturnType<typeof listContracts>> = [];
+  try {
+    contractsList = await listContracts();
+  } catch (err) {
+    console.error("Home page DB query error:", err);
+    contractsList = [];
+  }
 
   return (
     <div className="py-10 px-6 sm:px-10 max-w-6xl mx-auto text-slate-900">
@@ -86,18 +92,18 @@ export default async function Home() {
         </Link>
 
         <Link
-          href="/debug/parse"
+          href="/dashboard"
           className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-md transition group"
         >
-          <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center mb-3 group-hover:scale-105 transition">
             <Search className="w-5 h-5" />
           </div>
           <h3 className="text-sm font-bold text-slate-900 flex items-center justify-between">
-            Parse Only (Debug)
-            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700" />
+            Analytics Dashboard
+            <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-700" />
           </h3>
           <p className="mt-1 text-xs text-slate-500">
-            Verify parser text extraction and boundary detection without invoking AI models.
+            Real-time deterministic metrics, review status breakdown, and obligation time horizons.
           </p>
         </Link>
 

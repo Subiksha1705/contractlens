@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db/client";
 import { contracts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { sanitizeErrorMessage } from "@/lib/security/sanitize";
+import { isUuid } from "@/lib/db/queries";
 
 export async function DELETE(
   _req: NextRequest,
@@ -10,6 +11,10 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    if (!isUuid(id)) {
+      return NextResponse.json({ success: false, error: "Contract not found." }, { status: 404 });
+    }
+
     const db = getDb();
 
     const existing = await db
@@ -43,6 +48,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    if (!isUuid(id)) {
+      return NextResponse.json({ success: false, error: "Contract not found." }, { status: 404 });
+    }
+
     const db = getDb();
 
     const contract = await db
