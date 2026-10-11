@@ -50,6 +50,26 @@ flowchart TD
 
 ---
 
+## 📋 Project Scope: Completed vs. Excluded
+
+### ✅ Completed Scope
+- **Phase 1 (Database Foundation):** Neon Serverless PostgreSQL with Drizzle ORM schemas (`contracts`, `contract_versions`, `findings`), relational indexes, health check endpoints, and schema push scripts.
+- **Phase 2 (Ingestion & Parsing):** Deterministic multi-format extraction for PDF (`unpdf`), Word (`mammoth`), and plaintext (`.txt`) with paragraph and character boundary normalization.
+- **Phase 3 (Single-Call AI Pipeline):** Strict 1-Call budget rule per contract upload. Structured extraction of parties, dates, renewal terms, notice windows, governing law, obligations, conflicts, and ambiguities via OpenRouter / Gemini.
+- **Phase 4 (Zero-AI Review Studio):** DocuSign-inspired permanent light theme, split dual-pane layout with independent internal scrolling, verbatim character-level quote verification, human corrections preserving immutable AI records, and safety modals for unverified quotes.
+- **Phase 5 (Mathematical Deadlines):** Exact calendar and business day calculations using `date-fns` arithmetic, notice windows, month-end rollovers, automated reminder schedules (90d, 60d, 30d, 14d, 7d), and `needs_human_date` flags for vague clauses.
+- **Phase 6 (Multi-Version Diff & Stale Carry-Forward):** Version comparisons, token Jaccard similarity, automatic carry-forward of approvals for unchanged clauses, and `potentially_stale` tagging with explicit diff explanations.
+- **Phase 7 (Printable Summary & Visual Dashboard):** 5-group human review memo with print/PDF export styling, real-time SQL aggregate Donut and Bar charts, 1-click drilldowns from stat cards to Review Studio, and reusable contract/version switcher dropdowns.
+- **Phase 8 (Hardening, Security & Polish):** Zero exposed secrets, administrative database reset ("Clean DB"), batch multi-contract deletion with PostgreSQL cascades, dedicated `/health` page, universal toast notifications, and 56 passing Vitest automated tests.
+
+### 🚫 Excluded Scope (Intentional Design Decisions)
+- **Optical Character Recognition (OCR) for Flat Image Scans:** Scanned image-only PDFs without text layers are excluded to avoid heavy binary native dependencies (e.g., Tesseract); clean digital PDF, DOCX, and TXT formats are fully supported.
+- **Autonomous Legal Execution / Auto-Signing:** The application explicitly enforces human-in-the-loop review; it never signs contracts or automatically executes binding agreements.
+- **Multi-Turn Conversational Chatbots:** Excluded by design to maintain the strict 1-Call AI budget rule and prevent hallucination drift and unbounded token costs.
+- **External Vector Database Embeddings:** Excluded to ensure data privacy and regulatory compliance; all storage and analytics run deterministically inside PostgreSQL.
+
+---
+
 ## ✨ Key Features
 
 ### 1. DocuSign Review Studio
@@ -164,7 +184,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
    | `MAX_INPUT_CHARS` | `60000` | Input character truncation limit |
    | `MAX_UPLOAD_MB` | `10` | Maximum file size limit |
 5. Click **"Deploy"**. Vercel will build the production Next.js bundle and launch your deployment URL.
-6. Verify deployment by visiting: `https://your-app.vercel.app/api/health`.
+6. **Live Production Deployment:** Access the live deployment at [https://contractlens-4iv9.vercel.app/](https://contractlens-4iv9.vercel.app/) and verify database health at [https://contractlens-4iv9.vercel.app/health](https://contractlens-4iv9.vercel.app/health).
 
 ---
 
