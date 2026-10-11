@@ -190,6 +190,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🧪 60-Second Demo & Verification Walkthrough
 
+> 📖 **Comprehensive End-to-End Testing Guide:** For step-by-step UI testing instructions across all 11 feature suites without running scripts, see [`MANUAL_TESTING_GUIDE.md`](MANUAL_TESTING_GUIDE.md).
+
 You can test the entire pipeline using the included synthetic sample agreements in `samples/`:
 
 1. **Upload Contract v1:**
