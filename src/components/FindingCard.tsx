@@ -322,7 +322,7 @@ export function FindingCard({
 
         {/* Reviewed Timestamp */}
         {finding.reviewedAt && (
-          <span className="text-[11px] text-slate-600 font-mono">
+          <span suppressHydrationWarning className="text-[11px] text-slate-600 font-mono">
             Reviewed: {new Date(finding.reviewedAt).toLocaleDateString()}
           </span>
         )}

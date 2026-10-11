@@ -394,7 +394,9 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
                   </Link>
                   <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
-                    Uploaded on {new Date(c.createdAt).toLocaleDateString()}
+                    <span suppressHydrationWarning>
+                      Uploaded on {new Date(c.createdAt).toLocaleDateString()}
+                    </span>
                   </p>
                 </div>
               </div>
