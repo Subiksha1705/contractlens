@@ -2,12 +2,14 @@
 
 import React, { useState } from "react";
 import { Activity, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 
 interface HealthCheckClientProps {
   initialDbLatency?: number;
 }
 
 export function HealthCheckClient({ initialDbLatency = 0 }: HealthCheckClientProps) {
+  const { toast } = useToast();
   const [latency, setLatency] = useState<number | null>(initialDbLatency > 0 ? initialDbLatency : null);
   const [checking, setChecking] = useState(false);
   const [lastCheck, setLastCheck] = useState<string>("Ready");
@@ -23,12 +25,15 @@ export function HealthCheckClient({ initialDbLatency = 0 }: HealthCheckClientPro
       if (res.ok && data.status === "ok") {
         setLatency(elapsed);
         setStatus("ok");
+        toast.success("Health Check Passed", `Neon database ping verified in ${elapsed} ms.`);
       } else {
         setStatus("error");
+        toast.error("Health Check Degraded", "Database returned an unexpected response.");
       }
       setLastCheck(new Date().toLocaleTimeString());
     } catch {
       setStatus("error");
+      toast.error("Health Check Failed", "Could not reach database endpoint.");
     } finally {
       setChecking(false);
     }

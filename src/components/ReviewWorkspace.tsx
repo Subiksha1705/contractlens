@@ -15,8 +15,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Dropdown, DropdownItem } from "@/components/ui/Dropdown";
-
-
+import { useToast } from "@/components/ui/Toast";
 
 interface ReviewWorkspaceProps {
   initialFindings: Finding[];
@@ -33,6 +32,7 @@ export function ReviewWorkspace({
   fileName,
   sourceKind = "pdf",
 }: ReviewWorkspaceProps) {
+  const { toast } = useToast();
   const [findingsList, setFindingsList] = useState<Finding[]>(initialFindings);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [certaintyFilter, setCertaintyFilter] = useState<string>("all");
@@ -339,6 +339,7 @@ export function ReviewWorkspace({
                           setStatusFilter("all");
                           setCertaintyFilter("all");
                           setTypeFilter("all");
+                          toast.info("Filters Reset", "Showing all extracted clauses.");
                         }}
                         className="mt-2 text-xs font-bold text-[#005CB9] hover:underline"
                       >

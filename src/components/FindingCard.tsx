@@ -15,6 +15,7 @@ import {
   Loader2,
   FileSearch,
 } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 
 interface FindingCardProps {
   finding: Finding;
@@ -29,6 +30,7 @@ export function FindingCard({
   onSelectEvidence,
   isHighlighted = false,
 }: FindingCardProps) {
+  const { toast } = useToast();
   const [finding, setFinding] = useState<Finding>(initialFinding);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(finding.correctedValue ?? finding.aiValue);
@@ -64,8 +66,20 @@ export function FindingCard({
       if (onUpdate) onUpdate(data.finding);
       setIsEditing(false);
       setShowConfirmModal(false);
+
+      if (action === "approve") {
+        toast.success("Clause Approved", `Approved "${finding.title}"`);
+      } else if (action === "reject") {
+        toast.info("Clause Rejected", `Marked "${finding.title}" as rejected`);
+      } else if (action === "edit") {
+        toast.success("Corrections Saved", `Updated details for "${finding.title}"`);
+      } else if (action === "reset") {
+        toast.info("Reset to AI Value", `Reverted "${finding.title}" back to extracted value`);
+      }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg);
+      toast.error("Action Failed", msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -73,6 +87,7 @@ export function FindingCard({
 
   const handleApproveClick = () => {
     if (finding.evidenceStatus === "unverified") {
+      toast.warning("Unverified Quote", "Review unverified quote before approving.");
       setShowConfirmModal(true);
     } else {
       handleAction("approve");

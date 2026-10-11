@@ -15,12 +15,14 @@ import {
   ExternalLink,
   CheckSquare,
 } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 
 interface ContractListCardProps {
   initialContracts: Contract[];
 }
 
 export function ContractListCard({ initialContracts }: ContractListCardProps) {
+  const { toast } = useToast();
   const [contracts, setContracts] = useState<Contract[]>(initialContracts);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -66,6 +68,7 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     setError(null);
+    const targetTitle = contracts.find((c) => c.id === id)?.title || "Contract";
     try {
       const res = await fetch(`/api/contracts/${id}`, {
         method: "DELETE",
@@ -81,8 +84,11 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
         return next;
       });
       setConfirmDeleteId(null);
+      toast.success("Contract Deleted", `"${targetTitle}" and all its versions were removed.`);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error deleting contract");
+      const msg = err instanceof Error ? err.message : "Error deleting contract";
+      setError(msg);
+      toast.error("Deletion Failed", msg);
     } finally {
       setDeletingId(null);
     }
@@ -90,6 +96,7 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
+    const count = selectedIds.size;
     setIsBulkDeleting(true);
     setError(null);
     try {
@@ -106,8 +113,11 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
       setSelectedIds(new Set());
       setIsBulkMode(false);
       setShowBulkDeleteModal(false);
+      toast.success("Bulk Delete Complete", `Successfully deleted ${count} contracts and their records.`);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error cleaning database");
+      const msg = err instanceof Error ? err.message : "Error cleaning database";
+      setError(msg);
+      toast.error("Bulk Delete Failed", msg);
     } finally {
       setIsBulkDeleting(false);
     }
@@ -128,8 +138,11 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
       setSelectedIds(new Set());
       setIsBulkMode(false);
       setShowCleanModal(false);
+      toast.success("Database Cleaned", "All contracts, versions, and findings have been purged.");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error cleaning database");
+      const msg = err instanceof Error ? err.message : "Error cleaning database";
+      setError(msg);
+      toast.error("Cleanup Failed", msg);
     } finally {
       setIsCleaning(false);
     }

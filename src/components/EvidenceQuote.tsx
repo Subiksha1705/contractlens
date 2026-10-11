@@ -1,5 +1,8 @@
-import React from "react";
-import { ShieldCheck, AlertTriangle } from "lucide-react";
+"use client";
+
+import React, { useState } from "react";
+import { ShieldCheck, AlertTriangle, Copy, Check } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 
 interface EvidenceQuoteProps {
   quote: string;
@@ -9,7 +12,20 @@ interface EvidenceQuoteProps {
 }
 
 export function EvidenceQuote({ quote, status, page, section }: EvidenceQuoteProps) {
+  const { toast } = useToast();
+  const [copied, setCopied] = useState(false);
   const isVerified = status === "verified";
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(quote);
+      setCopied(true);
+      toast.info("Quote Copied", "Verbatim evidence quote copied to clipboard.");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Copy Failed", "Unable to access clipboard.");
+    }
+  };
 
   return (
     <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-2 bg-slate-50/70 p-3.5 rounded-xl text-xs">
@@ -42,6 +58,14 @@ export function EvidenceQuote({ quote, status, page, section }: EvidenceQuotePro
           <span className="bg-white px-2 py-0.5 rounded border border-slate-200 truncate max-w-[200px]" title={section ?? undefined}>
             {section ? section : "Section unavailable"}
           </span>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="p-1 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition"
+            title="Copy verbatim quote to clipboard"
+          >
+            {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+          </button>
         </div>
       </div>
 

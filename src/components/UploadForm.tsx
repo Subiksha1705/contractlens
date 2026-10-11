@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadCloud, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
 
 interface ParseResponse {
   success: boolean;
@@ -25,6 +26,7 @@ export function UploadForm({
   redirectOnSuccess = false,
 }: UploadFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [title, setTitle] = useState("");
   const [mode, setMode] = useState<"file" | "paste">("file");
   const [file, setFile] = useState<File | null>(null);
@@ -39,7 +41,9 @@ export function UploadForm({
     const selected = e.target.files?.[0];
     if (selected) {
       if (selected.size > 10 * 1024 * 1024) {
-        setError(`File size (${(selected.size / (1024 * 1024)).toFixed(1)} MB) exceeds the 10 MB limit.`);
+        const msg = `File size (${(selected.size / (1024 * 1024)).toFixed(1)} MB) exceeds the 10 MB limit.`;
+        setError(msg);
+        toast.error("File Too Large", msg);
         setFile(null);
         e.target.value = "";
         return;
@@ -47,6 +51,7 @@ export function UploadForm({
       setFile(selected);
       setError(null);
       setResult(null);
+      toast.info("Document Selected", `${selected.name} (${(selected.size / 1024).toFixed(1)} KB)`);
     }
   };
 
@@ -54,6 +59,7 @@ export function UploadForm({
     setMode("paste");
     setError(null);
     setResult(null);
+    toast.info("Sample Contract Loaded", `Loaded synthetic contract template (${v.toUpperCase()}).`);
     if (v === "v1") {
       setText(`MASTER SERVICES AGREEMENT
 
@@ -130,13 +136,17 @@ This Master Services Agreement ("Agreement") is made and entered into as of Janu
       }
 
       if (redirectOnSuccess && json.contractId) {
+        toast.success("Extraction Complete", "Contract obligations extracted! Opening Review Studio...");
         router.push(`/contracts/${json.contractId}`);
         return;
       }
 
+      toast.success("Document Ingested", "Deterministic text and boundary analysis completed.");
       setResult(json);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg);
+      toast.error("Extraction Failed", msg);
     } finally {
       setLoading(false);
     }
