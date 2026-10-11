@@ -85,5 +85,31 @@ describe("Phase 3: Evidence Verification & Location", () => {
 
       expect(result.section).toBeNull();
     });
+
+    it("reliably locates long sentences spanning across multiple line breaks", () => {
+      const multiLineDoc = `
+3. TERMINATION AND DEFAULT
+3.1 Termination for Cause. Either party may terminate this Agreement immediately upon written notice
+to the other party in the event that the other party materially breaches any provision hereof and fails
+to cure such breach within thirty (30) days after receipt of written notice specifying such breach.
+      `.trim();
+
+      const longSentence = "Either party may terminate this Agreement immediately upon written notice to the other party in the event that the other party materially breaches any provision hereof and fails to cure such breach within thirty (30) days after receipt of written notice specifying such breach.";
+
+      const result = locateQuote(longSentence, multiLineDoc, null);
+      expect(result.charStart).toBeGreaterThan(0);
+      expect(result.charEnd).toBeGreaterThan(result.charStart!);
+      expect(result.section).toBe("3.1 Termination for Cause.");
+      expect(multiLineDoc.slice(result.charStart!, result.charEnd!)).toContain("Either party may terminate this Agreement");
+    });
+
+    it("locates long sentence with curly quotes and em-dashes against straight characters", () => {
+      const docWithFancy = 'Section 4. Supply of Goods. The “Vendor” shall supply—upon reasonable request—all documentation.';
+      const quoteWithStraight = 'The "Vendor" shall supply - upon reasonable request - all documentation.';
+      const result = locateQuote(quoteWithStraight, docWithFancy, null);
+
+      expect(result.charStart).toBeGreaterThan(0);
+      expect(result.section).toBe("Section 4");
+    });
   });
 });

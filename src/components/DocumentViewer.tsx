@@ -11,12 +11,14 @@ import {
   X,
   FileCheck,
 } from "lucide-react";
+import { findAllMatchesInText, MatchRange } from "@/lib/evidence/matcher";
 
 interface DocumentViewerProps {
   rawText: string;
   fileName?: string | null;
   sourceKind?: string;
   highlightQuote?: string | null;
+  locateKey?: number;
   onClearHighlight?: () => void;
   className?: string;
 }
@@ -26,6 +28,7 @@ export function DocumentViewer({
   fileName,
   sourceKind = "pdf",
   highlightQuote,
+  locateKey,
   onClearHighlight,
   className = "",
 }: DocumentViewerProps) {
@@ -38,17 +41,6 @@ export function DocumentViewer({
   // Active search query derived from either typed input or clicked finding quote
   const activeQuery = (searchTerm || highlightQuote || "").trim();
 
-  // Scroll to highlighted quote when it changes
-  useEffect(() => {
-    if (highlightRef.current) {
-      highlightRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
-  }, [activeQuery]);
-
-
   // Split into clean paragraphs
   const paragraphs = useMemo(() => {
     return rawText
@@ -57,38 +49,66 @@ export function DocumentViewer({
       .filter((p) => p.length > 0);
   }, [rawText]);
 
-  // Helper to render text with highlighted snippets
+  // Compute matches per paragraph using robust long sentence & multi-line matcher
+  const paragraphMatches = useMemo<MatchRange[][]>(() => {
+    if (!activeQuery) return [];
+    return paragraphs.map((para) => findAllMatchesInText(para, activeQuery));
+  }, [paragraphs, activeQuery]);
+
+  const firstMatchingIndex = useMemo(() => {
+    return paragraphMatches.findIndex((ranges) => ranges.length > 0);
+  }, [paragraphMatches]);
+
+  // Scroll to highlighted quote whenever query, locate trigger, or match index changes
+  useEffect(() => {
+    if (highlightRef.current) {
+      highlightRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [activeQuery, highlightQuote, locateKey, firstMatchingIndex]);
+
+  // Helper to render text with highlighted snippets (full sentences, no truncation)
   const renderParagraph = (text: string, index: number) => {
     if (!activeQuery) {
       return <span>{text}</span>;
     }
 
-
-    // Try finding exact quote or words
-    const lowerText = text.toLowerCase();
-    const lowerQuery = activeQuery.toLowerCase().slice(0, 100); // truncate for regex safety
-    const matchPos = lowerText.indexOf(lowerQuery);
-
-    if (matchPos === -1) {
+    const ranges = paragraphMatches[index];
+    if (!ranges || ranges.length === 0) {
       return <span>{text}</span>;
     }
 
-    const before = text.slice(0, matchPos);
-    const match = text.slice(matchPos, matchPos + lowerQuery.length);
-    const after = text.slice(matchPos + lowerQuery.length);
+    const isFirstMatch = index === firstMatchingIndex;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
 
-    return (
-      <span>
-        {before}
+    ranges.forEach((range, rIdx) => {
+      if (range.start > lastIndex) {
+        parts.push(text.slice(lastIndex, range.start));
+      }
+
+      // Attach highlightRef strictly to the first matched mark in the first matched paragraph
+      const isTargetForScroll = isFirstMatch && rIdx === 0;
+
+      parts.push(
         <mark
-          ref={index === 0 || highlightQuote ? highlightRef : undefined}
-          className="bg-amber-200 text-amber-950 font-semibold px-1 py-0.5 rounded shadow-xs border border-amber-300 highlight-evidence"
+          key={rIdx}
+          ref={isTargetForScroll ? highlightRef : undefined}
+          className="bg-amber-200 text-amber-950 font-semibold px-1 py-0.5 rounded shadow-xs border border-amber-300 highlight-evidence ring-2 ring-amber-400/50 transition-all duration-300"
         >
-          {match}
+          {text.slice(range.start, range.end)}
         </mark>
-        {after}
-      </span>
-    );
+      );
+      lastIndex = range.end;
+    });
+
+    if (lastIndex < text.length) {
+      parts.push(text.slice(lastIndex));
+    }
+
+    return <span>{parts}</span>;
   };
 
   const fontSizeClass =
@@ -193,7 +213,11 @@ export function DocumentViewer({
         {highlightQuote && (
           <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 shrink-0">
             <FileCheck className="w-3.5 h-3.5 text-amber-600" />
-            <span>Finding Quote Located</span>
+            <span>
+              {firstMatchingIndex !== -1
+                ? `Clause Located (Section ${firstMatchingIndex + 1})`
+                : "Finding Quote Located"}
+            </span>
             <button
               type="button"
               onClick={onClearHighlight}

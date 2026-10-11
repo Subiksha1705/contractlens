@@ -1,5 +1,6 @@
 import { PageOffset, findPageForOffset } from "../parse/pages";
 import { normalize } from "./normalize";
+import { findMatchInText } from "./matcher";
 
 export interface LocateResult {
   charStart: number | null;
@@ -22,36 +23,11 @@ export function locateQuote(
   let charStart: number | null = null;
   let charEnd: number | null = null;
 
-  // 1. Direct match
-  const directIdx = fullText.indexOf(quote);
-  if (directIdx !== -1) {
-    charStart = directIdx;
-    charEnd = directIdx + quote.length;
-  } else {
-    // 2. Fuzzy substring match via first 25 normalized chars
-    const normQuote = normalize(quote);
-    const snippet = normQuote.slice(0, 30);
-
-    // Search window in full text
-    const lowerFull = fullText.toLowerCase();
-    const snippetWords = snippet.split(" ").filter(Boolean);
-    const firstWord = snippetWords[0];
-
-    if (firstWord) {
-      let searchPos = 0;
-      while (searchPos < lowerFull.length) {
-        const found = lowerFull.indexOf(firstWord, searchPos);
-        if (found === -1) break;
-
-        const candidateWindow = fullText.slice(found, found + quote.length + 150);
-        if (normalize(candidateWindow).includes(normQuote.slice(0, Math.min(normQuote.length, 60)))) {
-          charStart = found;
-          charEnd = Math.min(found + quote.length, fullText.length);
-          break;
-        }
-        searchPos = found + firstWord.length;
-      }
-    }
+  // 1. Match quote in full text (exact, multi-line, normalized, or sub-clause)
+  const match = findMatchInText(fullText, quote);
+  if (match) {
+    charStart = match.start;
+    charEnd = match.end;
   }
 
   // 3. Derive Page Number

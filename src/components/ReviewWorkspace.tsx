@@ -50,6 +50,16 @@ export function ReviewWorkspace({
 
   // Active highlighted evidence quote in document
   const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
+  const [locateCounter, setLocateCounter] = useState(0);
+
+  const handleSelectEvidence = (quote: string) => {
+    setSelectedQuote(quote);
+    setLocateCounter((c) => c + 1);
+    // If user was in findings-only mode, open split pane so document is visible
+    if (paneMode === "findings") {
+      setPaneMode("split");
+    }
+  };
 
   const handleFindingUpdated = (updated: Finding) => {
     setFindingsList((prev) =>
@@ -233,6 +243,7 @@ export function ReviewWorkspace({
               fileName={fileName}
               sourceKind={sourceKind}
               highlightQuote={selectedQuote}
+              locateKey={locateCounter}
               onClearHighlight={() => setSelectedQuote(null)}
             />
           </div>
@@ -356,7 +367,7 @@ export function ReviewWorkspace({
                         key={finding.id}
                         finding={finding}
                         onUpdate={handleFindingUpdated}
-                        onSelectEvidence={(quote) => setSelectedQuote(quote)}
+                        onSelectEvidence={handleSelectEvidence}
                         isHighlighted={selectedQuote === finding.evidenceQuote}
                       />
                     ))
