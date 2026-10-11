@@ -8,7 +8,12 @@ import {
 } from "../db/schema";
 import { parseDocument, ParseDocumentInput } from "../parse";
 import { PageOffset } from "../parse/pages";
-import { getProvider, AiProvider } from "../ai/adapter";
+import {
+  getProvider,
+  getBackupProvider,
+  isRateLimitOrQuotaError,
+  AiProvider,
+} from "../ai/adapter";
 import {
   aiExtractionSchema,
   partyExtractionSchema,
@@ -25,6 +30,7 @@ export interface IngestOptions {
   contractId?: string; // If creating a new version of existing contract
   policyText?: string;
   providerOverride?: AiProvider;
+  backupProviderOverride?: AiProvider | null;
   sourceKindOverride?: "pdf" | "docx" | "text";
   pagesOverride?: PageOffset[] | null;
 }
@@ -92,8 +98,18 @@ export async function ingestContract(
     versionNumber = existingVersions.length + 1;
   }
 
-  // 4. Exactly ONE AI Call
-  const provider = options.providerOverride ?? getProvider();
+  // 4. AI Call with Automatic Provider Fallback on Rate Limit / Quota Exhaustion
+  const primaryProvider = options.providerOverride ?? getProvider();
+  const backupProvider =
+    options.backupProviderOverride !== undefined
+      ? options.backupProviderOverride
+      : options.providerOverride
+      ? null
+      : getBackupProvider();
+
+  let activeProvider = primaryProvider;
+  let fallbackTriggered = false;
+  let fallbackReason: string | null = null;
   let extractionStatus: "ok" | "partial" | "failed" = "ok";
   let extractionError: string | null = null;
   let rawAiOutput = "";
@@ -103,10 +119,28 @@ export async function ingestContract(
   let parsedExtraction: unknown = null;
 
   try {
-    const aiResult = await provider.extract({
-      contractText: fullText,
-      policyText: options.policyText,
-    });
+    let aiResult;
+    try {
+      aiResult = await activeProvider.extract({
+        contractText: fullText,
+        policyText: options.policyText,
+      });
+    } catch (primaryErr: unknown) {
+      if (backupProvider && isRateLimitOrQuotaError(primaryErr)) {
+        fallbackTriggered = true;
+        fallbackReason = primaryErr instanceof Error ? primaryErr.message : String(primaryErr);
+        console.warn(
+          `[ContractLens] Primary AI provider '${activeProvider.name}' limit reached (${fallbackReason}). Switching to backup provider '${backupProvider.name}' (${backupProvider.model})...`
+        );
+        activeProvider = backupProvider;
+        aiResult = await activeProvider.extract({
+          contractText: fullText,
+          policyText: options.policyText,
+        });
+      } else {
+        throw primaryErr;
+      }
+    }
 
     rawAiOutput = aiResult.rawJson;
     aiLatencyMs = aiResult.latencyMs;
@@ -125,7 +159,10 @@ export async function ingestContract(
     }
   } catch (err: unknown) {
     extractionStatus = "failed";
-    extractionError = `AI provider error: ${err instanceof Error ? err.message : String(err)}`;
+    const baseError = err instanceof Error ? err.message : String(err);
+    extractionError = fallbackTriggered
+      ? `Primary provider '${primaryProvider.name}' limit reached, and backup provider '${activeProvider.name}' failed: ${baseError}`
+      : `AI provider error: ${baseError}`;
   }
 
   // 5. Create contract_versions row
@@ -140,8 +177,8 @@ export async function ingestContract(
       pages: parsed.pages ?? undefined,
       policyText: options.policyText ?? null,
       truncated,
-      aiProvider: provider.name,
-      aiModel: provider.model,
+      aiProvider: activeProvider.name,
+      aiModel: activeProvider.model,
       extractionStatus,
       extractionError,
     })
@@ -168,13 +205,15 @@ export async function ingestContract(
     versionId,
     type: "ai_call",
     detail: {
-      provider: provider.name,
-      model: provider.model,
+      provider: activeProvider.name,
+      model: activeProvider.model,
       inputChars: fullText.length,
       latencyMs: aiLatencyMs,
       usage: tokenUsage ?? null,
       status: extractionStatus,
       error: extractionError,
+      fallbackTriggered,
+      fallbackReason,
     },
   });
 

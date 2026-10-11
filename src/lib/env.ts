@@ -3,6 +3,8 @@ import { z } from "zod";
 const envSchema = z.object({
   DATABASE_URL: z.string().url("DATABASE_URL must be a valid PostgreSQL connection URL"),
   AI_PROVIDER: z.enum(["openrouter", "gemini", "mock"]).default("mock"),
+  BACKUP_AI_PROVIDER: z.enum(["openrouter", "gemini", "mock", "none"]).optional(),
+  BACKUP_AI_MODEL: z.string().optional(),
   OPENROUTER_API_KEY: z.string().optional(),
   OPENROUTER_MODEL: z.string().default("meta-llama/llama-3.3-70b-instruct:free"),
   GEMINI_API_KEY: z.string().optional(),
@@ -21,6 +23,8 @@ export function getEnv(): Env {
   const rawEnv = {
     DATABASE_URL: process.env.DATABASE_URL,
     AI_PROVIDER: process.env.AI_PROVIDER ?? "mock",
+    BACKUP_AI_PROVIDER: process.env.BACKUP_AI_PROVIDER,
+    BACKUP_AI_MODEL: process.env.BACKUP_AI_MODEL,
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || process.env.API_KEY,
     OPENROUTER_MODEL: process.env.OPENROUTER_MODEL ?? "meta-llama/llama-3.3-70b-instruct:free",
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
@@ -50,6 +54,18 @@ export function getEnv(): Env {
   if (result.data.AI_PROVIDER === "gemini" && !result.data.GEMINI_API_KEY) {
     throw new Error(
       "[ContractLens Configuration Error]: AI_PROVIDER is set to 'gemini', but GEMINI_API_KEY is not defined in your environment."
+    );
+  }
+
+  if (result.data.BACKUP_AI_PROVIDER === "openrouter" && !result.data.OPENROUTER_API_KEY) {
+    throw new Error(
+      "[ContractLens Configuration Error]: BACKUP_AI_PROVIDER is set to 'openrouter', but OPENROUTER_API_KEY is not defined in your environment."
+    );
+  }
+
+  if (result.data.BACKUP_AI_PROVIDER === "gemini" && !result.data.GEMINI_API_KEY) {
+    throw new Error(
+      "[ContractLens Configuration Error]: BACKUP_AI_PROVIDER is set to 'gemini', but GEMINI_API_KEY is not defined in your environment."
     );
   }
 

@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { getDb } from "@/lib/db/client";
+import { getEnv } from "@/lib/env";
 import { contracts, contractVersions, findings } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
 import {
@@ -42,10 +43,43 @@ export default async function HealthPage() {
     console.error("Health check error:", err);
   }
 
-  const aiProvider = process.env.AI_PROVIDER || "openrouter";
-  const aiModel = process.env.OPENROUTER_MODEL || "cohere/north-mini-code:free";
-  const maxInputChars = Number(process.env.MAX_INPUT_CHARS || 60000);
-  const maxUploadMb = Number(process.env.MAX_UPLOAD_MB || 10);
+  const env = getEnv();
+  const aiProvider = env.AI_PROVIDER;
+  const aiModel = aiProvider === "openrouter" ? env.OPENROUTER_MODEL : env.GEMINI_MODEL;
+  const backupProvider = env.BACKUP_AI_PROVIDER || (env.GEMINI_API_KEY ? "gemini" : "none");
+  const backupModel =
+    backupProvider === "gemini"
+      ? env.BACKUP_AI_MODEL || env.GEMINI_MODEL
+      : env.BACKUP_AI_MODEL || env.OPENROUTER_MODEL;
+  const maxInputChars = env.MAX_INPUT_CHARS;
+  const maxUploadMb = env.MAX_UPLOAD_MB;
+
+  // Server-side pre-fetch of live OpenRouter quota
+  let initialQuota = null;
+  if (env.OPENROUTER_API_KEY) {
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/auth/key", {
+        headers: { Authorization: `Bearer ${env.OPENROUTER_API_KEY}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(5000),
+      });
+      if (res.ok) {
+        const body = await res.json();
+        const d = body?.data;
+        initialQuota = {
+          status: "connected" as const,
+          label: d?.label ?? "Active Key",
+          isFreeTier: Boolean(d?.is_free_tier),
+          expiresAt: d?.expires_at ?? null,
+          dailyLimit: d?.free_model_daily_requests?.limit ?? 50,
+          dailyUsed: d?.free_model_daily_requests?.used ?? 0,
+          dailyRemaining: d?.free_model_daily_requests?.remaining ?? 50,
+        };
+      }
+    } catch {
+      // Gracefully continue with client-side polling
+    }
+  }
 
   return (
     <div className="max-w-4xl mx-auto py-10 px-5 sm:px-8 text-slate-900">
@@ -73,7 +107,7 @@ export default async function HealthPage() {
               ContractLens Health Status
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              Live status for Neon Serverless PostgreSQL, AI pipeline guards, and runtime limits.
+              Live status for Neon Serverless PostgreSQL, AI pipeline guards, OpenRouter quota limits, and automatic failover routing.
             </p>
           </div>
 
@@ -86,90 +120,56 @@ export default async function HealthPage() {
         </div>
       </div>
 
-      {/* Interactive Diagnostics Client Widget */}
-      <HealthCheckClient />
+      {/* Interactive Diagnostics & Live AI Quota Widget */}
+      <HealthCheckClient
+        initialQuota={initialQuota}
+        aiConfig={{
+          primaryProvider: aiProvider,
+          primaryModel: aiModel,
+          backupProvider,
+          backupModel,
+        }}
+      />
 
-      {/* Core Infrastructure Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
-        {/* Database Status Card */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#005CB9] flex items-center justify-center">
-                <Database className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">Neon PostgreSQL</h3>
-                <p className="text-[11px] text-slate-400">Serverless Pooled Database</p>
-              </div>
+      {/* Database Status Card */}
+      <div className="mt-6 bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#005CB9] flex items-center justify-center">
+              <Database className="w-5 h-5" />
             </div>
-            <span
-              className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                dbStatus === "ok"
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                  : "bg-rose-50 text-rose-700 border border-rose-200"
-              }`}
-            >
-              {dbStatus === "ok" ? "Connected" : "Error"}
-            </span>
-          </div>
-
-          <div className="space-y-2.5 text-xs">
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-500">Connection State</span>
-              <span className="font-semibold text-emerald-600">Online & Verified</span>
-            </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-500">SSL Connection</span>
-              <span className="font-semibold text-emerald-600">Enforced (require)</span>
-            </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-500">Driver</span>
-              <span className="font-mono text-slate-700">@neondatabase/serverless</span>
-            </div>
-            <div className="flex justify-between py-1.5">
-              <span className="text-slate-500">ORM Schema Layer</span>
-              <span className="font-mono text-slate-700">Drizzle ORM v0.45</span>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Neon PostgreSQL</h3>
+              <p className="text-[11px] text-slate-400">Serverless Pooled Database</p>
             </div>
           </div>
+          <span
+            className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+              dbStatus === "ok"
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                : "bg-rose-50 text-rose-700 border border-rose-200"
+            }`}
+          >
+            {dbStatus === "ok" ? "Connected" : "Error"}
+          </span>
         </div>
 
-        {/* AI Provider & Budget Card */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                <Cpu className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">AI Extraction Engine</h3>
-                <p className="text-[11px] text-slate-400">Strict 1-Call Architecture</p>
-              </div>
-            </div>
-            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Active
-            </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-slate-500 block text-[11px]">Connection State</span>
+            <span className="font-semibold text-emerald-600 block mt-0.5">Online & Verified</span>
           </div>
-
-          <div className="space-y-2.5 text-xs">
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-500">AI Provider</span>
-              <span className="font-mono font-semibold text-slate-800 uppercase">{aiProvider}</span>
-            </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-500">Active Model</span>
-              <span className="font-mono text-[11px] text-[#005CB9] truncate max-w-[200px]" title={aiModel}>
-                {aiModel}
-              </span>
-            </div>
-            <div className="flex justify-between py-1.5 border-b border-slate-100">
-              <span className="text-slate-500">Token Budget Guarantee</span>
-              <span className="font-semibold text-emerald-600">Exactly 1 Call per Upload</span>
-            </div>
-            <div className="flex justify-between py-1.5">
-              <span className="text-slate-500">Zero AI Services</span>
-              <span className="text-slate-700">Dates, Diffs, Summaries (0 tokens)</span>
-            </div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-slate-500 block text-[11px]">SSL Connection</span>
+            <span className="font-semibold text-emerald-600 block mt-0.5">Enforced (require)</span>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-slate-500 block text-[11px]">Driver</span>
+            <span className="font-mono text-slate-700 block mt-0.5">@neondatabase/serverless</span>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <span className="text-slate-500 block text-[11px]">ORM Schema Layer</span>
+            <span className="font-mono text-slate-700 block mt-0.5">Drizzle ORM v0.45</span>
           </div>
         </div>
       </div>
