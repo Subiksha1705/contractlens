@@ -49,6 +49,7 @@ Payment: Invoices must be paid within 30 days.
     } else {
       console.error(`Schema Match  : FAILED Zod validation ❌`);
       console.error(JSON.stringify(zodResult.error.format(), null, 2));
+      console.log(`Parsed Object :`, JSON.stringify(parsed, null, 2));
       process.exit(1);
     }
   } catch (err: unknown) {
