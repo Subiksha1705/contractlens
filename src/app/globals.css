@@ -72,21 +72,45 @@ body,
   transition: all 0.3s ease;
 }
 
-/* Suppress unwanted browser blue focus lines on SVGs, Recharts elements & buttons */
-svg,
-svg *,
-.recharts-surface,
+/* Suppress unwanted browser blue focus lines and cursors on SVGs & Recharts elements */
 .recharts-wrapper,
+.recharts-wrapper *,
+.recharts-surface,
+.recharts-surface *,
 .recharts-layer,
+.recharts-bar,
+.recharts-bar-rectangles,
 .recharts-bar-rectangle,
 .recharts-pie-sector,
 .recharts-sector,
-*:focus:not(:focus-visible) {
+svg,
+svg * {
   outline: none !important;
+  outline-width: 0 !important;
+  box-shadow: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
 
+.recharts-wrapper:focus,
+.recharts-wrapper *:focus,
+.recharts-wrapper:focus-visible,
+.recharts-wrapper *:focus-visible,
+.recharts-surface:focus,
+.recharts-surface *:focus,
+.recharts-surface:focus-visible,
+.recharts-surface *:focus-visible,
+svg:focus,
+svg *:focus,
+svg:focus-visible,
+svg *:focus-visible {
+  outline: none !important;
+  outline-width: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Hide default grey/blue rectangle cursor behind bars while preserving hover stats popover */
 .recharts-tooltip-cursor {
+  display: none !important;
+  fill: transparent !important;
   stroke: transparent !important;
-  fill: rgba(0, 92, 185, 0.04) !important;
 }

@@ -29,9 +29,9 @@ export function StatusChart({ data }: StatusChartProps) {
   const activeData = data.filter((d) => d.count > 0);
 
   return (
-    <div className="h-64 w-full outline-none select-none">
+    <div className="h-64 w-full outline-none select-none [&_*]:outline-none">
       <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
+        <PieChart accessibilityLayer={false}>
           <Pie
             data={activeData}
             cx="50%"

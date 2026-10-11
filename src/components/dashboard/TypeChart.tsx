@@ -25,9 +25,10 @@ export function TypeChart({ data }: TypeChartProps) {
   }
 
   return (
-    <div className="h-64 w-full outline-none select-none">
+    <div className="h-64 w-full outline-none select-none [&_*]:outline-none">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
+          accessibilityLayer={false}
           data={data}
           layout="vertical"
           margin={{ top: 10, right: 20, left: 20, bottom: 5 }}
@@ -41,7 +42,7 @@ export function TypeChart({ data }: TypeChartProps) {
             tick={{ fontSize: 11, fill: "#475569", fontWeight: 600 }}
           />
           <Tooltip
-            cursor={{ fill: "rgba(0, 92, 185, 0.04)" }}
+            cursor={false}
             formatter={(value: unknown) => [`${value} items`, "Count"]}
             contentStyle={{
               backgroundColor: "#ffffff",
