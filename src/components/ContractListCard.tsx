@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Loader2,
   ExternalLink,
+  CheckSquare,
 } from "lucide-react";
 
 interface ContractListCardProps {
@@ -27,6 +28,7 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
   const [showCleanModal, setShowCleanModal] = useState(false);
   const [isCleaning, setIsCleaning] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBulkMode, setIsBulkMode] = useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,6 +104,7 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
       }
       setContracts((prev) => prev.filter((c) => !selectedIds.has(c.id)));
       setSelectedIds(new Set());
+      setIsBulkMode(false);
       setShowBulkDeleteModal(false);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error cleaning database");
@@ -123,6 +126,7 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
       }
       setContracts([]);
       setSelectedIds(new Set());
+      setIsBulkMode(false);
       setShowCleanModal(false);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error cleaning database");
@@ -156,6 +160,30 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
               className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-[#005CB9] transition"
             />
           </div>
+
+          {/* Bulk Delete Toggle Button (near Clean DB) */}
+          {contracts.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (isBulkMode) {
+                  setIsBulkMode(false);
+                  setSelectedIds(new Set());
+                } else {
+                  setIsBulkMode(true);
+                }
+              }}
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition shrink-0 flex items-center gap-1.5 ${
+                isBulkMode
+                  ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+              }`}
+              title={isBulkMode ? "Exit bulk delete selection" : "Select multiple contracts to delete"}
+            >
+              <CheckSquare className="w-3.5 h-3.5 text-[#005CB9]" />
+              {isBulkMode ? "Cancel Selection" : "Bulk Delete"}
+            </button>
+          )}
 
           {/* Clean DB Button */}
           {contracts.length > 0 && (
@@ -267,9 +295,9 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
         </div>
       )}
 
-      {/* Bulk Action Bar / Select All Header */}
-      {filteredContracts.length > 0 && (
-        <div className="mb-3 flex items-center justify-between px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50/60 transition">
+      {/* Bulk Action Bar / Select All Header - Only visible when Bulk Delete is clicked */}
+      {isBulkMode && filteredContracts.length > 0 && (
+        <div className="mb-3 flex items-center justify-between px-3.5 py-2 rounded-xl border border-blue-200 bg-blue-50/70 transition">
           <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <input
               type="checkbox"
@@ -280,7 +308,7 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
               onChange={toggleSelectAll}
               className="w-4 h-4 rounded text-[#005CB9] focus:ring-[#005CB9] border-slate-300 cursor-pointer"
             />
-            <span className="text-xs font-semibold text-slate-700">
+            <span className="text-xs font-bold text-slate-800">
               {selectedIds.size > 0
                 ? `${selectedIds.size} of ${filteredContracts.length} selected`
                 : "Select All"}
@@ -293,7 +321,7 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
                 <button
                   type="button"
                   onClick={() => setSelectedIds(new Set())}
-                  className="text-xs font-medium text-slate-500 hover:text-slate-800 transition"
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition"
                 >
                   Clear Selection
                 </button>
@@ -303,12 +331,12 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
                   className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-xs transition"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  Bulk Delete ({selectedIds.size})
+                  Delete Selected ({selectedIds.size})
                 </button>
               </>
             ) : (
-              <span className="text-[11px] text-slate-400">
-                {filteredContracts.length} {filteredContracts.length === 1 ? "agreement" : "agreements"}
+              <span className="text-[11px] text-slate-500">
+                Select contracts below to delete
               </span>
             )}
           </div>
@@ -322,24 +350,26 @@ export function ContractListCard({ initialContracts }: ContractListCardProps) {
             <div
               key={c.id}
               className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition group ${
-                selectedIds.has(c.id)
+                isBulkMode && selectedIds.has(c.id)
                   ? "bg-blue-50/40 border-l-4 border-l-[#005CB9]"
                   : "hover:bg-slate-50/80"
               }`}
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                {/* Row Checkbox */}
-                <label
-                  className="flex items-center justify-center p-1 -ml-1 cursor-pointer shrink-0 rounded hover:bg-slate-200/50 transition"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(c.id)}
-                    onChange={() => toggleSelectOne(c.id)}
-                    className="w-4 h-4 rounded text-[#005CB9] focus:ring-[#005CB9] border-slate-300 cursor-pointer"
-                  />
-                </label>
+                {/* Row Checkbox - Only shown in Bulk Mode */}
+                {isBulkMode && (
+                  <label
+                    className="flex items-center justify-center p-1 -ml-1 cursor-pointer shrink-0 rounded hover:bg-slate-200/50 transition"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(c.id)}
+                      onChange={() => toggleSelectOne(c.id)}
+                      className="w-4 h-4 rounded text-[#005CB9] focus:ring-[#005CB9] border-slate-300 cursor-pointer"
+                    />
+                  </label>
+                )}
 
                 <div className="min-w-0 flex-1">
                   <Link
