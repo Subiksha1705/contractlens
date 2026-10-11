@@ -1,5 +1,4 @@
 import { PageOffset, findPageForOffset } from "../parse/pages";
-import { normalize } from "./normalize";
 import { findMatchInText } from "./matcher";
 
 export interface LocateResult {

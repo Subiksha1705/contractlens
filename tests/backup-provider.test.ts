@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ingestContract } from "@/lib/services/ingest";
-import { AiProvider, ExtractionInput, ExtractionOutput, isRateLimitOrQuotaError } from "@/lib/ai/adapter";
+import { AiProvider, ExtractionOutput, isRateLimitOrQuotaError } from "@/lib/ai/adapter";
 import { MOCK_EXTRACTION_FIXTURE } from "@/lib/ai/mock";
 import { getDb } from "@/lib/db/client";
 import { auditEvents, contractVersions } from "@/lib/db/schema";

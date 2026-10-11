@@ -7,7 +7,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon_Serverless-blue.svg?style=flat-square&logo=postgresql)](https://neon.tech/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Drizzle ORM](https://img.shields.io/badge/Drizzle_ORM-v0.45-green.svg?style=flat-square)](https://orm.drizzle.team/)
-[![Vitest](https://img.shields.io/badge/Vitest-55_Tests_Passing-brightgreen.svg?style=flat-square&logo=vitest)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-72_Tests_Passing-brightgreen.svg?style=flat-square&logo=vitest)](https://vitest.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
 ---
@@ -60,7 +60,7 @@ flowchart TD
 - **Phase 5 (Mathematical Deadlines):** Exact calendar and business day calculations using `date-fns` arithmetic, notice windows, month-end rollovers, automated reminder schedules (90d, 60d, 30d, 14d, 7d), and `needs_human_date` flags for vague clauses.
 - **Phase 6 (Multi-Version Diff & Stale Carry-Forward):** Version comparisons, token Jaccard similarity, automatic carry-forward of approvals for unchanged clauses, and `potentially_stale` tagging with explicit diff explanations.
 - **Phase 7 (Printable Summary & Visual Dashboard):** 5-group human review memo with print/PDF export styling, real-time SQL aggregate Donut and Bar charts, 1-click drilldowns from stat cards to Review Studio, and reusable contract/version switcher dropdowns.
-- **Phase 8 (Hardening, Security & Polish):** Zero exposed secrets, administrative database reset ("Clean DB"), batch multi-contract deletion with PostgreSQL cascades, dedicated `/health` page, universal toast notifications, and 56 passing Vitest automated tests.
+- **Phase 8 (Hardening, Security & Polish):** Zero exposed secrets, administrative database reset ("Clean DB"), batch multi-contract deletion with PostgreSQL cascades, dedicated `/health` page, universal toast notifications, and 72 passing Vitest automated tests across 12 test suites.
 
 ### 🚫 Excluded Scope (Intentional Design Decisions)
 - **Optical Character Recognition (OCR) for Flat Image Scans:** Scanned image-only PDFs without text layers are excluded to avoid heavy binary native dependencies (e.g., Tesseract); clean digital PDF, DOCX, and TXT formats are fully supported.

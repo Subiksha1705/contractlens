@@ -13,8 +13,6 @@ import {
   Clock,
   Layers,
   Zap,
-  ArrowRight,
-  HelpCircle,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 

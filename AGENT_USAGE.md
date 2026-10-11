@@ -126,8 +126,8 @@ During the iterative process, several subtle bugs, edge cases, and design challe
 Every phase and feature was verified through a comprehensive multi-tier testing pipeline:
 
 1. **Automated Unit & Integration Testing (`pnpm test`):**
-   - 10 test suites in `tests/` covering database operations, deterministic parsers, AI budget isolation, evidence locators, date math, version diffs, security sanitization, and cascading deletes.
-   - **Result:** 56 out of 56 tests passing.
+   - 12 test suites in `tests/` covering database operations, deterministic parsers, AI budget isolation, evidence locators, date math, version diffs, security sanitization, cascading deletes, backup provider fallback, and dropdown navigation.
+   - **Result:** 72 out of 72 tests passing.
 
 2. **Static Type Checking (`pnpm typecheck`):**
    - Executed `tsc --noEmit` across all App Router routes, components, and server actions.

@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   Database,
-  Cpu,
   ShieldCheck,
   Zap,
   Activity,
